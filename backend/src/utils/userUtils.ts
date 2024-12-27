@@ -2,7 +2,7 @@ import { Pool } from 'pg';
 import { User } from '../models/User';
 import dotenv from 'dotenv';
 
-const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
 dotenv.config({ path: envFile });
 
 const pool = new Pool({
