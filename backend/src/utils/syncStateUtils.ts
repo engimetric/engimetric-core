@@ -1,12 +1,17 @@
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
 
-dotenv.config();
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
+dotenv.config({ path: envFile });
 
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    host: process.env.DB_HOST,
+    port: parseInt(process.env.DB_PORT || '5432', 10),
+    database: process.env.DB_NAME,
     ssl: {
-        rejectUnauthorized: false, // Set to true if you have a valid SSL cert
+        rejectUnauthorized: false,
     },
 });
 

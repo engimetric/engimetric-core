@@ -12,10 +12,12 @@ dotenv.config({ path: envFile });
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+const origin = process.env.NODE_ENV === 'production' ? 'https://engimetric.com' : 'http://localhost:3000';
 app.set('port', port);
 app.use(
     cors({
-        origin: 'http://localhost:3000', // Replace with your frontend URL
+        origin,
         credentials: true, // Allow cookies to be sent
     }),
 );
