@@ -2,18 +2,17 @@ import { buttonVariants } from '@/components/ui/buttonVariants';
 import { CTABanner } from '@/features/landing/CTABanner';
 import { Section } from '@/features/landing/Section';
 import { ArrowRightIcon } from '@radix-ui/react-icons';
-import { useTranslations } from 'next-intl';
+
+import Link from 'next/link';
 
 export const CTA = () => {
-    const t = useTranslations('CTA');
-
     return (
         <Section>
             <CTABanner
-                title={t('title')}
-                description={t('description')}
+                title="Start Tracking Your Engineering Metrics Today"
+                description="Set up your team, sync integrations, and start generating insights."
                 buttons={
-                    <a
+                    <Link
                         className={buttonVariants({
                             variant: 'outline',
                             size: 'lg',
@@ -21,10 +20,9 @@ export const CTA = () => {
                         })}
                         href="/register"
                     >
-                        {t('button_text')}
-
+                        Sign Up Now
                         <ArrowRightIcon className="ml-1 size-5" />
-                    </a>
+                    </Link>
                 }
             />
         </Section>

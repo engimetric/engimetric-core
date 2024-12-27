@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 type Team = {
     id: number;
     name: string;
@@ -29,7 +31,7 @@ export default function TeamPage() {
     useEffect(() => {
         const loadTeams = async () => {
             try {
-                const response = await fetch('http://localhost:1050/api/team/', {
+                const response = await fetch(`${API_BASE_URL}/team/`, {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include', // Ensure cookies are included

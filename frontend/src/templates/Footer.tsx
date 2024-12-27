@@ -1,13 +1,10 @@
 import { CenteredFooter } from '@/features/landing/CenteredFooter';
 import { Section } from '@/features/landing/Section';
 import { AppConfig } from '@/utils/AppConfig';
-import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { Logo } from './Logo';
+import { Logo } from '@/templates/Logo';
 
 export const Footer = () => {
-    const t = useTranslations('Footer');
-
     return (
         <Section className="pb-16 pt-0">
             <CenteredFooter
@@ -27,28 +24,28 @@ export const Footer = () => {
                 legalLinks={
                     <>
                         <li>
-                            <Link href="/terms">{t('terms_of_service')}</Link>
+                            <Link href="#">Terms of Service</Link>
                         </li>
                         <li>
-                            <Link href="/privacy">{t('privacy_policy')}</Link>
+                            <Link href="#">Privacy Policy</Link>
                         </li>
                     </>
                 }
             >
                 <li>
-                    <Link href="/product">{t('product')}</Link>
+                    <Link href="/product">Product</Link>
                 </li>
 
                 <li>
-                    <Link href="https://www.github.com/engimetric">{t('docs')}</Link>
+                    <Link href="https://www.github.com/engimetric/engimetric-core">Documentation</Link>
                 </li>
 
                 <li>
-                    <Link href="https://www.github.com/engimetric">{t('community')}</Link>
+                    <Link href="https://www.github.com/engimetric/engimetric-core">Community</Link>
                 </li>
 
                 <li>
-                    <Link href="/about">{t('company')}</Link>
+                    <Link href="/about">About Us</Link>
                 </li>
             </CenteredFooter>
         </Section>

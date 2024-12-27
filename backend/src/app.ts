@@ -7,8 +7,8 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import { startScheduler } from './jobs/scheduler';
 
-// Load environment variables
-dotenv.config();
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
+dotenv.config({ path: envFile });
 
 const app = express();
 const port = process.env.PORT || 3000;

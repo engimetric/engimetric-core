@@ -32,6 +32,7 @@
                 "requireReturnDescription": false
             }
         ],
+        "@typescript-eslint/no-explicit-any": "error",
         "getter-return": "error",
         "no-await-in-loop": "error",
         "no-prototype-builtins": "error",

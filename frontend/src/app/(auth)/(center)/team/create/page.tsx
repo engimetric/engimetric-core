@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 export default function CreateTeamPage() {
     const router = useRouter();
 
@@ -14,7 +16,7 @@ export default function CreateTeamPage() {
     const handleCreateTeam = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const response = await fetch('http://localhost:1050/api/team', {
+            const response = await fetch(`${API_BASE_URL}/team/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include', // if you're setting auth cookies

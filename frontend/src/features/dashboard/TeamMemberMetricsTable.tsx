@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { startCase } from 'lodash';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 interface DetailedMetrics {
     [month: string]: {
         [integration: string]: {
@@ -47,7 +49,7 @@ const TeamMemberMetricsTable = () => {
      */
     const fetchTeamMembers = async () => {
         try {
-            const response = await fetch('http://localhost:1050/api/members', {
+            const response = await fetch(`${API_BASE_URL}/members/`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -70,7 +72,7 @@ const TeamMemberMetricsTable = () => {
      */
     const fetchTeamMemberMetrics = async () => {
         try {
-            const response = await fetch('http://localhost:1050/api/members/metrics', {
+            const response = await fetch(`${API_BASE_URL}/members/metrics`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',

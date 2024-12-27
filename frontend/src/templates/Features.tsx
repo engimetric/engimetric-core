@@ -1,17 +1,14 @@
 import { Background } from '@/components/Background';
 import { FeatureCard } from '@/features/landing/FeatureCard';
 import { Section } from '@/features/landing/Section';
-import { useTranslations } from 'next-intl';
 
 export const Features = () => {
-    const t = useTranslations('Features');
-
     return (
         <Background>
             <Section
-                subtitle={t('section_subtitle')}
-                title={t('section_title')}
-                description={t('section_description')}
+                subtitle="Core Features"
+                title="Engineering Insights Made Simple"
+                description="Track and analyze team metrics with seamless integrations and AI-generated reports."
             >
                 <div className="grid grid-cols-1 gap-x-3 gap-y-8 md:grid-cols-3">
                     <FeatureCard
@@ -28,9 +25,10 @@ export const Features = () => {
                                 <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3M12 12l8-4.5M12 12v9M12 12L4 7.5" />
                             </svg>
                         }
-                        title={t('feature1_title')}
+                        title="Engineering Defined Integrations"
                     >
-                        {t('feature1_description')}
+                        Seamlessly integrate with tools like GitHub, Jira, and Zoom to streamline your
+                        team&apos;s workflows and centralize performance data.
                     </FeatureCard>
 
                     <FeatureCard
@@ -47,9 +45,10 @@ export const Features = () => {
                                 <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3M12 12l8-4.5M12 12v9M12 12L4 7.5" />
                             </svg>
                         }
-                        title={t('feature2_title')}
+                        title="Automatic Syncing"
                     >
-                        {t('feature2_description')}
+                        Keep your data up-to-date with automated syncing across all connected integrations,
+                        ensuring real-time accuracy.
                     </FeatureCard>
 
                     <FeatureCard
@@ -66,9 +65,10 @@ export const Features = () => {
                                 <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3M12 12l8-4.5M12 12v9M12 12L4 7.5" />
                             </svg>
                         }
-                        title={t('feature3_title')}
+                        title="Expandable Metric Table"
                     >
-                        {t('feature3_description')}
+                        Dive deeper into your data with expandable metric tables, providing granular insights
+                        per integration and team member.
                     </FeatureCard>
 
                     <FeatureCard
@@ -85,9 +85,10 @@ export const Features = () => {
                                 <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3M12 12l8-4.5M12 12v9M12 12L4 7.5" />
                             </svg>
                         }
-                        title={t('feature4_title')}
+                        title="On-Prem Deployment"
                     >
-                        {t('feature4_description')}
+                        Deploy Engimetric on your infrastructure for maximum control, data privacy, and
+                        customization.
                     </FeatureCard>
 
                     <FeatureCard
@@ -104,9 +105,10 @@ export const Features = () => {
                                 <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3M12 12l8-4.5M12 12v9M12 12L4 7.5" />
                             </svg>
                         }
-                        title={t('feature5_title')}
+                        title="AI-Generated Reports"
                     >
-                        {t('feature5_description')}
+                        Leverage AI-generated summaries to uncover key insights, trends, and actionable
+                        recommendations across your team&apos;s performance.
                     </FeatureCard>
 
                     <FeatureCard
@@ -123,9 +125,10 @@ export const Features = () => {
                                 <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3M12 12l8-4.5M12 12v9M12 12L4 7.5" />
                             </svg>
                         }
-                        title={t('feature6_title')}
+                        title="Scalable Infrastructure"
                     >
-                        {t('feature6_description')}
+                        Built to scale with your team, Engimetric supports growing datasets, multiple
+                        integrations, and increased performance demands without compromise.
                     </FeatureCard>
                 </div>
             </Section>

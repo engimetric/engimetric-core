@@ -3,9 +3,9 @@
     "version": "1.0.0",
     "main": "dist/app.js",
     "scripts": {
-        "build": "tsc --project tsconfig.json && tsc-alias -p tsconfig.json",
-        "start": "node dist/app.js",
-        "dev": "nodemon --inspect-brk=1051 -r ts-node/register -r tsconfig-paths/register src/app.ts",
+        "build": "NODE_ENV=production tsc --project tsconfig.json && tsc-alias -p tsconfig.json",
+        "start": "NODE_ENV=production node dist/app.js",
+        "dev": "NODE_ENV=development nodemon --inspect-brk=1051 -r ts-node/register -r tsconfig-paths/register src/app.ts",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "private": true,

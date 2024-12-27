@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 interface AuthContextProps {
     user: unknown;
     teams: { id: number; name: string }[];
@@ -13,8 +15,12 @@ interface AuthContextProps {
 
 const AuthContext = createContext<AuthContextProps | null>(null);
 
+interface User {
+    email: string;
+}
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState<User | null>(null);
     const [teams, setTeams] = useState([]);
     const [, setSelectedTeam] = useState<number | null>(null);
     const router = useRouter();
@@ -28,7 +34,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
      */
     const fetchUser = async () => {
         try {
-            const response = await fetch('http://localhost:1050/api/auth/me', {
+            const response = await fetch(`${API_BASE_URL}/auth/me/`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include', // Ensure cookies are included
@@ -51,7 +57,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
      * Login the user and retrieve teams
      */
     const login = async (credentials: { email: string; password: string }) => {
-        const response = await fetch('http://localhost:1050/api/auth/login', {
+        const response = await fetch(`${API_BASE_URL}/auth/login/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include', // Ensure cookies are included
@@ -61,6 +67,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const data = await response.json();
 
         if (response.ok) {
+            if (!data?.email) {
+                throw new Error('Invalid response from server');
+            }
             setUser({ email: data?.email });
             setTeams(data.teams);
         } else {
@@ -72,7 +81,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
      * Select a team and store it in the session via cookie
      */
     const selectTeam = async (teamId: number) => {
-        const response = await fetch('http://localhost:1050/api/auth/select-team', {
+        const response = await fetch(`${API_BASE_URL}/auth/select-team`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include', // Ensure cookies are included
@@ -95,7 +104,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
      * Logout and clear cookies
      */
     const logout = async () => {
-        await fetch('http://localhost:1050/api/auth/logout', {
+        await fetch(`${API_BASE_URL}/auth/logout`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include', // Ensure cookies are included

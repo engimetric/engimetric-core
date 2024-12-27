@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 interface TeamMember {
     id: number;
     fullName: string;
@@ -26,7 +28,7 @@ const TeamMembersPage = () => {
     /** Fetch Team Members */
     const fetchTeamMembers = async () => {
         try {
-            const response = await fetch('http://localhost:1050/api/members', {
+            const response = await fetch(`${API_BASE_URL}/members/`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -44,7 +46,7 @@ const TeamMembersPage = () => {
     const handleAddMember = async () => {
         if (!newMember.fullName) return alert('Full name is required');
         try {
-            const response = await fetch('http://localhost:1050/api/members', {
+            const response = await fetch(`${API_BASE_URL}/members/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -63,7 +65,7 @@ const TeamMembersPage = () => {
     const handleDeleteMember = async (id: number) => {
         if (!confirm('Are you sure you want to delete this member?')) return;
         try {
-            const response = await fetch(`http://localhost:1050/api/members/${id}`, {
+            const response = await fetch(`${API_BASE_URL}/members/${id}`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -84,7 +86,7 @@ const TeamMembersPage = () => {
         }
         try {
             selectedMember.aliases = selectedMember.aliases.concat([newAlias]);
-            const response = await fetch(`http://localhost:1050/api/members/`, {
+            const response = await fetch(`${API_BASE_URL}/members/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -108,7 +110,7 @@ const TeamMembersPage = () => {
         try {
             selectedMember.aliases = selectedMember.aliases.filter((a) => a !== alias);
 
-            const response = await fetch(`http://localhost:1050/api/members/`, {
+            const response = await fetch(`${API_BASE_URL}/members/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',

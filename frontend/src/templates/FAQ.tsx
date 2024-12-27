@@ -1,16 +1,16 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Section } from '@/features/landing/Section';
-import { useTranslations } from 'next-intl';
 
 export const FAQ = () => {
-    const t = useTranslations('FAQ');
-
     return (
         <Section>
             <Accordion type="multiple" className="w-full">
                 <AccordionItem value="item-1">
-                    <AccordionTrigger>{t('question')}</AccordionTrigger>
-                    <AccordionContent>{t('answer')}</AccordionContent>
+                    <AccordionTrigger>What integrations are supported?</AccordionTrigger>
+                    <AccordionContent>
+                        Currently, GitHub is supported as a proof of concept. Future integrations include
+                        Jira, Zoom, and more.
+                    </AccordionContent>
                 </AccordionItem>
             </Accordion>
         </Section>

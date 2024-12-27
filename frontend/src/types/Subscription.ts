@@ -1,5 +1,5 @@
 import type { PLAN_ID } from '@/utils/AppConfig';
-import type { EnumValues } from './Enum';
+import type { EnumValues } from '@/types/Enum';
 
 export type PlanId = EnumValues<typeof PLAN_ID>;
 
@@ -22,6 +22,8 @@ export type PricingPlan = {
     testPriceId: string; // Use for testing
     devPriceId: string;
     prodPriceId: string;
+    description: string;
+    name: string;
     features: {
         capabilities: string;
         hosting: string;

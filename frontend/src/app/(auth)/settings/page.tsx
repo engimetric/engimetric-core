@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { startCase } from 'lodash';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface IntegrationSettings {
     enabled: boolean;
@@ -32,7 +33,7 @@ const SettingsPage = () => {
             setLoading(true);
 
             try {
-                const response = await fetch('http://localhost:1050/api/settings/', {
+                const response = await fetch(`${API_BASE_URL}/settings/`, {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
@@ -84,7 +85,7 @@ const SettingsPage = () => {
      */
     const handleSave = async () => {
         try {
-            const response = await fetch('http://localhost:1050/settings/', {
+            const response = await fetch(`${API_BASE_URL}/settings/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',

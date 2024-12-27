@@ -5,11 +5,8 @@ import { AppSidebarNav } from '@/features/dashboard/AppSidebarNav';
 import { Logo } from '@/templates/Logo';
 
 import { Building2, CreditCard, Home, LifeBuoy, Send, Settings, Users } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 
 export const AppSidebar = (props: React.ComponentProps<typeof Sidebar>) => {
-    const t = useTranslations('DashboardLayout');
-
     return (
         <Sidebar {...props}>
             <SidebarHeader className="pt-5">
@@ -19,35 +16,40 @@ export const AppSidebar = (props: React.ComponentProps<typeof Sidebar>) => {
             </SidebarHeader>
             <SidebarContent>
                 <AppSidebarNav
-                    label={t('main_section_label')}
+                    label="Dashboard"
                     items={[
                         {
-                            title: t('home'),
+                            title: 'Dashboard',
                             url: '/dashboard',
                             icon: Home,
                         },
                     ]}
                 />
                 <AppSidebarNav
-                    label={t('organization_section_label')}
+                    label="Team Management"
                     items={[
                         {
-                            title: t('billing'),
+                            title: 'Billing',
                             url: '/billing',
                             icon: CreditCard,
                         },
                         {
-                            title: t('members'),
+                            title: 'Team Members',
                             url: '/members',
                             icon: Users,
                         },
                         {
-                            title: t('settings'),
+                            title: 'Settings',
                             url: '/settings',
                             icon: Settings,
                         },
+                    ]}
+                />
+                <AppSidebarNav
+                    label="User Management"
+                    items={[
                         {
-                            title: t('teams'),
+                            title: 'Teams',
                             url: '/team',
                             icon: Building2,
                         },
@@ -56,12 +58,12 @@ export const AppSidebar = (props: React.ComponentProps<typeof Sidebar>) => {
                 <AppSidebarNav
                     items={[
                         {
-                            title: t('support'),
+                            title: 'Support',
                             url: 'mailto:contact@engimetric.com',
                             icon: LifeBuoy,
                         },
                         {
-                            title: t('feedback'),
+                            title: 'Feedback',
                             url: 'mailto:contact@engimetric.com',
                             icon: Send,
                         },

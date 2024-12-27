@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 export default function RegisterUserPage() {
     const router = useRouter();
 
@@ -14,7 +16,7 @@ export default function RegisterUserPage() {
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const response = await fetch('http://localhost:1050/api/auth/register', {
+            const response = await fetch(`${API_BASE_URL}/auth/register/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include', // if you're setting auth cookies

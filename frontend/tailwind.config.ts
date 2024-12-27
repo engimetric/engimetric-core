@@ -1,6 +1,7 @@
+/* eslint-disable ts/no-require-imports */
 import type { Config } from 'tailwindcss';
-import animate from 'tailwindcss-animate';
-import containers from '@tailwindcss/container-queries';
+import ContainerQueries from '@tailwindcss/container-queries';
+import Animate from 'tailwindcss-animate';
 
 const config = {
     darkMode: ['class'],
@@ -73,7 +74,7 @@ const config = {
             },
         },
     },
-    plugins: [animate, containers],
+    plugins: [Animate, ContainerQueries],
 } satisfies Config;
 
 export default config;
