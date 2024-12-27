@@ -18,6 +18,10 @@ export default function LoginForm() {
             await login({ email, password });
             router.push('/team');
         } catch (err: any) {
+            console.error(err);
+            if (err.message === 'User is not part of any team') {
+                router.push('/team/create');
+            }
             setError(err.message || 'Failed to login');
         }
     };

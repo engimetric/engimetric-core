@@ -33,7 +33,7 @@ export const Pricing = () => {
                                 size: 'sm',
                                 className: 'mt-5 w-full',
                             })}
-                            href="/sign-up"
+                            href="/register"
                         >
                             {t('button_text')}
                         </Link>

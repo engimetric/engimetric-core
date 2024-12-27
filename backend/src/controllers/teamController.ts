@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { createOrUpdateTeam, fetchAllTeams, fetchTeamById, deleteTeam } from '../utils/teamUtils';
-import { fetchUserTeams } from '../utils/userTeamUtils';
+import { fetchUserTeams, addUserToTeam } from '../utils/userTeamUtils';
 
 /**
  * Get all teams
@@ -72,23 +72,29 @@ export const getTeamsByUserId = async (req: Request, res: Response): Promise<voi
  */
 export const saveTeam = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { id, name, slug, description, ownerId, members } = req.body;
-        if (!id || !name || !slug) {
-            res.status(400).json({ message: 'ID, name, and slug are required' });
+        const { name, description } = req.body;
+        const userId = req?.user?.id;
+
+        if (!userId) {
+            res.status(400).json({ message: 'User ID is missing from user data.' });
+            return;
+        }
+        if (!name) {
+            res.status(400).json({ message: 'Name is required' });
             return;
         }
 
-        const team = {
-            id,
+        const newTeam = {
             name,
-            slug,
+            slug: name.toLowerCase().replace(/\s+/g, '-'),
             description,
-            ownerId,
+            ownerId: userId,
             createdAt: new Date(),
             updatedAt: new Date(),
         };
 
-        await createOrUpdateTeam(team);
+        const team = await createOrUpdateTeam(newTeam);
+        await addUserToTeam(userId, team.id, 'admin');
         res.status(200).json({ message: 'Team saved successfully' });
     } catch (error) {
         console.error('Error saving team:', error);

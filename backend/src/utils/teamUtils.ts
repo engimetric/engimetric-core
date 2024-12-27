@@ -15,26 +15,31 @@ const pool = new Pool({
  * Create or update a team.
  * @param team - Team object with necessary fields.
  */
+
+/**
+ * Create or update a team by its slug.
+ * If the slug doesn't exist, insert a new team (auto-generated id).
+ * If the slug already exists, update fields.
+ * @param team - The team object containing at least slug, name, etc.
+ */
 export const createOrUpdateTeam = async (team: {
-    id?: number;
     slug: string;
     name: string;
     description?: string;
     ownerId?: number | null;
 }) => {
     const query = `
-        INSERT INTO teams (id, slug, name, description, owner_id, updated_at)
-        VALUES ($1, $2, $3, $4, $5, NOW())
-        ON CONFLICT (id) DO UPDATE
-        SET slug = EXCLUDED.slug,
-            name = EXCLUDED.name,
+      INSERT INTO teams (slug, name, description, owner_id, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, NOW(), NOW())
+      ON CONFLICT (slug) DO UPDATE
+        SET name = EXCLUDED.name,
             description = EXCLUDED.description,
             owner_id = EXCLUDED.owner_id,
             updated_at = NOW()
-        RETURNING *;
+      RETURNING *;
     `;
 
-    const values = [team.id || null, team.slug, team.name, team.description || null, team.ownerId || null];
+    const values = [team.slug, team.name, team.description ?? null, team.ownerId ?? null];
 
     try {
         const result = await pool.query(query, values);

@@ -51,24 +51,20 @@ export const deleteUser = async (userId: number): Promise<void> => {
  * Create or update a user.
  * @param user - User object with necessary fields.
  */
-export const createOrUpdateUser = async (user: {
-    id?: number;
-    email: string;
-    password: string;
-    admin?: boolean;
-}) => {
+
+export const createOrUpdateUser = async (user: { email: string; password: string; admin?: boolean }) => {
     const query = `
-        INSERT INTO users (id, email, password, admin, updated_at)
-        VALUES ($1, $2, $3, $4, NOW())
-        ON CONFLICT (id) DO UPDATE
-        SET email = EXCLUDED.email,
-            password = EXCLUDED.password,
-            admin = EXCLUDED.admin,
-            updated_at = NOW()
-        RETURNING *;
+      INSERT INTO users (email, password, admin, created_at, updated_at)
+      VALUES ($1, $2, $3, NOW(), NOW())
+      ON CONFLICT (email) DO UPDATE
+        SET 
+          password = EXCLUDED.password,
+          admin = EXCLUDED.admin,
+          updated_at = NOW()
+      RETURNING *;
     `;
 
-    const values = [user.id || null, user.email, user.password, user.admin || false];
+    const values = [user.email, user.password, user.admin ?? false];
 
     try {
         const result = await pool.query(query, values);
