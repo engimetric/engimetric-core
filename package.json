@@ -1,0 +1,40 @@
+{
+    "name": "engimetric-core",
+    "version": "1.0.0",
+    "description": "The core monorepo for the Engimetric platform, providing modular components, integrations, and AI-powered insights.",
+    "private": true,
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/engimetric/engimetric-core.git"
+    },
+    "homepage": "https://engimetric.com",
+    "bugs": {
+        "url": "https://github.com/engimetric/engimetric-core/issues"
+    },
+    "main": "backend/index.ts",
+    "scripts": {
+        "lint": "eslint .",
+        "format": "eslint . --fix",
+        "start": "concurrently \"npm run backend\" \"npm run frontend\"",
+        "install-all": "npm install && npm run install-backend && npm run install-frontend",
+        "install-backend": "cd backend && npm install",
+        "install-frontend": "cd frontend && npm install && npm run build"
+    },
+    "author": "Engimetric",
+    "license": "AGPL-3.0",
+    "dependencies": {
+        "build-client": "^1.0.12",
+        "concurrently": "^9.1.0",
+        "dotenv": "^16.4.7",
+        "typescript": "^5.7.2"
+    },
+    "devDependencies": {
+        "eslint": "^9.17.0",
+        "eslint-config-prettier": "^9.1.0",
+        "eslint-plugin-import": "^2.31.0",
+        "eslint-plugin-prettier": "^5.2.1",
+        "eslint-plugin-react": "^7.37.2",
+        "prettier": "^3.4.2",
+        "prettier-eslint-cli": "^8.0.1"
+    }
+}

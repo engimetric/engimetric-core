@@ -1,0 +1,29 @@
+'use client';
+
+import React from 'react';
+import '../styles/globals.css';
+import PublicNavbar from '@/components/PublicNavbar';
+import SubNavbar from '@/components/SubNavbar';
+import Footer from '@/components/Footer';
+import { usePathname } from 'next/navigation';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+    const pathname = usePathname();
+
+    const isTeamRoute = /^\/[^/]+\/.*$/.test(pathname || '');
+
+    return (
+        <html lang="en" className="dark">
+            <head>
+                <meta charSet="UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <title>Engineering Metrics AI</title>
+            </head>
+            <body>
+                {isTeamRoute ? <SubNavbar /> : <PublicNavbar />}
+                <main className="w-full max-w-full">{children}</main>
+                <Footer />
+            </body>
+        </html>
+    );
+}
