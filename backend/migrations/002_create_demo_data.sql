@@ -37,9 +37,9 @@ INSERT INTO user_teams (user_id, team_id, role, created_at, updated_at) VALUES
 INSERT INTO user_teams (user_id, team_id, role, created_at, updated_at) VALUES
 (2, 2, 'admin', NOW(), NOW());
 
--- Demo User as Member in the Demo Team
+-- Admin User as Member in the QA Team
 INSERT INTO user_teams (user_id, team_id, role, created_at, updated_at) VALUES
-(2, 1, 'member', NOW(), NOW());
+(1, 2, 'member', NOW(), NOW());
 
 -- ========================================
 -- Insert Demo Team Members (External Users/Integrations)
@@ -65,8 +65,7 @@ BEGIN
             jsonb_build_object(
                 'GitHub', jsonb_build_object(
                     'merges', FLOOR(RANDOM() * 20 + 5)::INTEGER,
-                    'reviews', FLOOR(RANDOM() * 10 + 2)::INTEGER,
-                    'comments', FLOOR(RANDOM() * 50 + 10)::INTEGER
+                    'reviews', FLOOR(RANDOM() * 10 + 2)::INTEGER
                 ),
                 'Jira', jsonb_build_object(
                     'stories', FLOOR(RANDOM() * 30 + 10)::INTEGER,

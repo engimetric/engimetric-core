@@ -15,16 +15,15 @@ CREATE TABLE users (
 -- Teams Table
 CREATE TABLE teams (
     id SERIAL PRIMARY KEY,
-    slug VARCHAR(255) UNIQUE NOT NULL, -- URL-friendly identifier
-    name VARCHAR(255) NOT NULL, -- Display name of the team
-    description TEXT, -- Optional team description
-    owner_id INTEGER, -- References the owner user (can be NULL)
-    subscription_id INTEGER, -- References the team's subscription plan
-    is_frozen BOOLEAN DEFAULT FALSE, -- Flag to lock the team from editing/syncing
-    frozen_reason VARCHAR(255), -- Reason why the team is frozen (nullable)
-    is_demo BOOLEAN DEFAULT FALSE, -- Specific flag for demo teams
-    created_at TIMESTAMP DEFAULT NOW(), -- Record creation timestamp
-    updated_at TIMESTAMP DEFAULT NOW() -- Last update timestamp
+    slug VARCHAR(255) UNIQUE NOT NULL,     -- URL-friendly identifier
+    name VARCHAR(255) NOT NULL,            -- Display name of the team
+    description TEXT,                      -- Optional team description
+    owner_id INTEGER,                      -- References the owner user (can be NULL)
+    is_frozen BOOLEAN DEFAULT FALSE,       -- Flag to lock the team from editing/syncing
+    frozen_reason VARCHAR(255),            -- Reason why the team is frozen (nullable)
+    is_demo BOOLEAN DEFAULT FALSE,         -- Specific flag for demo teams
+    created_at TIMESTAMP DEFAULT NOW(),    -- Record creation timestamp
+    updated_at TIMESTAMP DEFAULT NOW()     -- Last update timestamp
 );
 
 -- User Teams Table (Many-to-Many relationship between users and teams)
@@ -32,7 +31,7 @@ CREATE TABLE user_teams (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     team_id INTEGER NOT NULL,
-    role VARCHAR(50) DEFAULT 'member', -- e.g., 'admin', 'member'
+    role VARCHAR(50) DEFAULT 'member',     -- e.g., 'admin', 'member'
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     UNIQUE (user_id, team_id)
@@ -63,26 +62,29 @@ CREATE TABLE sync_states (
     PRIMARY KEY (team_id, integration)
 );
 
--- Settings Table
+-- Settings Table (1-to-1 with teams)
 CREATE TABLE settings (
-    team_id INTEGER PRIMARY KEY,
+    team_id INTEGER PRIMARY KEY,           -- team_id is the PK, also unique
     integrations JSONB DEFAULT '{}'::JSONB,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Subscriptions Table
+-- Subscriptions Table (1-to-1 with teams)
 CREATE TABLE subscriptions (
     id SERIAL PRIMARY KEY,
-    team_id INTEGER NOT NULL,
-    plan_type VARCHAR(50) NOT NULL, -- e.g., 'free', 'hosted', 'enterprise'
-    status VARCHAR(50) DEFAULT 'active', -- e.g., 'active', 'canceled', 'expired'
-    billing_cycle VARCHAR(50), -- e.g., 'monthly', 'yearly'
+    team_id INTEGER NOT NULL,             -- references teams.id
+    plan_type VARCHAR(50) NOT NULL,       -- e.g., 'free', 'hosted', 'enterprise'
+    status VARCHAR(50) DEFAULT 'active',  -- e.g., 'active', 'canceled', 'expired'
+    billing_cycle VARCHAR(50),            -- e.g., 'monthly', 'yearly'
     start_date TIMESTAMP DEFAULT NOW(),
     end_date TIMESTAMP,
-    metadata JSONB DEFAULT '{}'::JSONB, -- For additional plan-specific details
+    metadata JSONB DEFAULT '{}'::JSONB,   -- For additional plan-specific details
     created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    updated_at TIMESTAMP DEFAULT NOW(),
+
+    -- Make team_id unique so there's at most one subscription per team:
+    CONSTRAINT unique_subscription_team_id UNIQUE (team_id)
 );
 
 -- ========================================
@@ -122,14 +124,10 @@ ALTER TABLE settings
 ADD CONSTRAINT fk_settings_team
 FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE;
 
--- Add a subscription reference to Teams
-ALTER TABLE teams
-ADD COLUMN subscription_id INTEGER;
-
--- Add Foreign Key Constraint
-ALTER TABLE teams
-ADD CONSTRAINT fk_teams_subscription
-FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE SET NULL;
+-- Subscriptions Table
+ALTER TABLE subscriptions
+ADD CONSTRAINT fk_subscriptions_team
+FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE;
 
 -- ========================================
 -- Phase 3: Indices and Constraints
@@ -143,13 +141,13 @@ CREATE INDEX idx_team_members_team_id ON team_members (team_id);
 CREATE INDEX idx_sync_states_team_id ON sync_states (team_id);
 CREATE INDEX idx_settings_team_id ON settings (team_id);
 
--- Ensure unique email for team members if provided
+-- Ensure unique email for team_members if provided
 CREATE UNIQUE INDEX idx_team_members_email ON team_members (email) WHERE email IS NOT NULL;
 
--- Ensure unique integration per team in sync_states
+-- Ensure unique integration per team in sync_states (already done via PRIMARY KEY, but okay as an index)
 CREATE UNIQUE INDEX idx_sync_states_integration ON sync_states (team_id, integration);
 
--- Ensure unique user per team in user_teams
+-- Ensure unique user per team in user_teams (already done via UNIQUE (user_id, team_id))
 CREATE UNIQUE INDEX idx_user_teams_unique ON user_teams (user_id, team_id);
 
 -- Index on plan_type for faster queries by plan type
