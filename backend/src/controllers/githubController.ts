@@ -72,7 +72,7 @@ const processGithubData = (
  * @param res - The response object
  * @returns A message indicating the success or failure of the operation
  */
-export const updateGithubData = async (req: Request, res: Response): Promise<void> => {
+export const syncByMonth = async (req: Request, res: Response): Promise<void> => {
     try {
         const { month } = req.body;
         const user = req.user;
@@ -83,21 +83,20 @@ export const updateGithubData = async (req: Request, res: Response): Promise<voi
             return;
         }
 
-        if (!teamId || !month) {
-            res.status(400).json({ message: 'Required parameters "teamId" and "month" are missing.' });
+        if (!teamId) {
+            res.status(400).json({ message: 'Required parameters "teamId" is missing.' });
             return;
         }
 
         console.log(`🔄 Updating GitHub data for Team ID: ${teamId} in month: ${month}`);
 
-        // Sync GitHub data dynamically
         await syncIntegrationData(
             teamId,
             'GitHub',
             month,
             async (settings, startDate, endDate) => fetchGithubData(settings, { startDate, endDate }),
             processGithubData,
-            1, // Sync for one month in this API call
+            1,
         );
 
         res.status(200).json({ message: 'GitHub data successfully updated.' });
@@ -105,6 +104,59 @@ export const updateGithubData = async (req: Request, res: Response): Promise<voi
         console.error('❌ Error updating GitHub data:', error);
         res.status(500).json({
             message: 'Failed to update contributions.',
+            error: (error as Error).message,
+        });
+    }
+};
+
+/**
+ * Update GitHub data for the past 12 months.
+ * This API endpoint is used to manually trigger a data sync for GitHub.
+ * The data is fetched from the GitHub API and processed to calculate contributions for each team member.
+ * The contributions are then saved in the database.
+ *
+ * Request body should contain:
+ * - month: The month for which to update the data (format: 'YYYY-MM')
+ * @example
+ * {
+ *  "month": "2021-07"
+ * }
+ * @param req - The request object
+ * @param res - The response object
+ * @returns A message indicating the success or failure of the operation
+ */
+export const fullSync = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { month } = req.body;
+        const user = req.user;
+        const teamId = user?.teamId;
+
+        if (!user) {
+            res.status(401).json({ message: 'Unauthorized: No user data.' });
+            return;
+        }
+
+        if (!teamId) {
+            res.status(400).json({ message: 'Required parameter "teamId" is missing.' });
+            return;
+        }
+
+        console.log(`🔄 Updating GitHub data for Team ID: ${teamId} in month: ${month}`);
+
+        await syncIntegrationData(
+            teamId,
+            'GitHub',
+            month,
+            async (settings, startDate, endDate) => fetchGithubData(settings, { startDate, endDate }),
+            processGithubData,
+            12,
+        );
+
+        res.status(200).json({ message: 'GitHub data successfully updated.' });
+    } catch (error) {
+        console.error('❌ Error updating GitHub data:', error);
+        res.status(500).json({
+            message: 'Failed to full sync.',
             error: (error as Error).message,
         });
     }
@@ -120,7 +172,6 @@ export const updateGithubData = async (req: Request, res: Response): Promise<voi
  *     integration: {
  *      merges: number,
  *      reviews: number,
- *      changes: number,
  *    },
  * }
  * Required query parameter:
@@ -133,14 +184,12 @@ export const updateGithubData = async (req: Request, res: Response): Promise<voi
  *     GitHub: {
  *       merges: 5,
  *       reviews: 10,
- *       changes: 20,
  *     },
  *   },
  *   2: {
  *     GitHub: {
  *       merges: 3,
  *       reviews: 8,
- *       changes: 15,
  *     },
  *   },
  * }

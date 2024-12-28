@@ -1,17 +1,17 @@
 import express from 'express';
 import { authenticate } from '../middleware/authMiddleware';
-import { updateGithubData, getGithubContributions } from '../controllers/githubController';
+import { fullSync, syncByMonth, getGithubContributions } from '../controllers/githubController';
 
 const router = express.Router();
 
 /**
- * @route POST /update-data
- * @description Update GitHub data for a user
+ * @route POST /sync-month
+ * @description Sync a month's GitHub data for a user
  * @access Protected
  * @returns {Object} - Updated user object
  * @throws {500} - If an error occurs
  * @example
- * POST /github/update-data
+ * POST /github/sync-month
  * {
  *  "month" : "2021-07"
  * }
@@ -19,7 +19,19 @@ const router = express.Router();
  * @param res - The response object
  * @returns The updated user object
  */
-router.post('/update-data', authenticate, updateGithubData);
+router.post('/sync-month', authenticate, syncByMonth);
+
+/**
+ * @route POST /full-sync
+ * @description Update GitHub data for a user
+ * @access Protected
+ * @returns {Object} - Updated user object
+ * @throws {500} - If an error occurs
+ * @param req - The request object
+ * @param res - The response object
+ * @returns The updated user object
+ */
+router.post('/full-sync', authenticate, fullSync);
 
 /**
  * @route GET /get-contributions

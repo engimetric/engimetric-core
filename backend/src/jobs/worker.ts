@@ -3,6 +3,8 @@ import { fetchTeamMembersWithAliases } from '../utils/teamMemberUtils';
 import { fetchGithubData, processPullRequest, saveData } from '../utils/githubUtils';
 import { fetchIntegrationSettingByName } from '../utils/settingsUtils';
 
+import { past12Months } from '../utils/commonUtils';
+
 /**
  * Refresh Integration Data
  *
@@ -21,19 +23,6 @@ import { fetchIntegrationSettingByName } from '../utils/settingsUtils';
  * @returns A promise that resolves when the data has been refreshed
  */
 export const refreshIntegrationData = async (teamId: number, integration: string) => {
-    // Generate an array of the past 12 months in 'YYYY-MM' format
-    const past12Months: { month: string; startDate: string; endDate: string }[] = Array.from(
-        { length: 12 },
-        (_, i) => {
-            const month = moment().subtract(i, 'months');
-            return {
-                month: month.format('YYYY-MM'),
-                startDate: month.startOf('month').format('YYYY-MM-DD'),
-                endDate: month.endOf('month').format('YYYY-MM-DD'),
-            };
-        },
-    );
-
     try {
         console.log(`🛠️ Refreshing data for Team ID: ${teamId}, Integration: ${integration}`);
 
@@ -67,10 +56,7 @@ export const refreshIntegrationData = async (teamId: number, integration: string
             }
 
             const teamMembers = await fetchTeamMembersWithAliases(teamId);
-            const allData: Record<
-                number,
-                { integration: string; merges: number; reviews: number; changes: number }
-            > = {};
+            const allData: Record<number, { integration: string; merges: number; reviews: number }> = {};
 
             // Process integration data
             for (const item of integrationData) {
@@ -82,12 +68,10 @@ export const refreshIntegrationData = async (teamId: number, integration: string
                                 integration,
                                 merges: 0,
                                 reviews: 0,
-                                changes: 0,
                             };
                         }
                         allData[Number(memberId)].merges += value.merges;
                         allData[Number(memberId)].reviews += value.reviews;
-                        allData[Number(memberId)].changes += value.changes;
                     }
                 }
             }

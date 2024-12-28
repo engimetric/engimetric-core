@@ -19,7 +19,7 @@ const pool = new Pool({
 });
 
 /**
- * Fetch real GitHub Pull Request data.
+ * Fetch GitHub Pull Request data.
  */
 export const fetchGithubData = async (
     integrationSettings: IntegrationSettings,
@@ -37,13 +37,18 @@ export const fetchGithubData = async (
             `🔄 Fetching GitHub Pull Requests for org: ${org}, range: ${range.startDate} to ${range.endDate}`,
         );
 
-        const { data } = await octokit.search.issuesAndPullRequests({
-            q: `org:${org} is:pr state:closed merged:${range.startDate}..${range.endDate}`,
-            per_page: 100,
-        });
+        // Use octokit.paginate to fetch all pages of results
+        const results = await octokit.paginate(
+            'GET /search/issues',
+            {
+                q: `org:${org} is:pr state:closed merged:${range.startDate}..${range.endDate}`,
+                per_page: 100,
+            },
+            (response) => response.data.items, // Extract items from each page
+        );
 
-        console.log(`✅ Fetched ${data.items.length} Pull Requests from GitHub`);
-        return data.items;
+        console.log(`✅ Fetched ${results.length} Pull Requests from GitHub`);
+        return results;
     } catch (error) {
         console.error(`🚨 Error fetching GitHub data: ${(error as Error).message}`);
         throw error;
@@ -59,7 +64,7 @@ export const processPullRequest = (
     pullRequest: any,
     teamMembers: TeamMember[],
 ): {
-    [memberId: number]: { integration: string; merges: number; reviews: number; changes: number };
+    [memberId: number]: { integration: string; merges: number; reviews: number };
 } | null => {
     const userLogin = pullRequest.user?.login;
 
@@ -78,7 +83,6 @@ export const processPullRequest = (
             integration: 'GitHub',
             merges: 1,
             reviews: 0,
-            changes: pullRequest.additions || 0 + pullRequest.deletions || 0,
         },
     };
 };
@@ -88,7 +92,7 @@ export const processPullRequest = (
  */
 export const saveData = async (
     teamId: number,
-    data: Record<number, { integration: string; merges: number; reviews: number; changes: number }>,
+    data: Record<number, { integration: string; merges: number; reviews: number }>,
     month: string,
 ) => {
     const client = await pool.connect();
@@ -112,14 +116,12 @@ export const saveData = async (
                 existingMetrics[month][metrics.integration] = {
                     merges: 0,
                     reviews: 0,
-                    changes: 0,
                 };
             }
 
             // Update the metrics dynamically
             existingMetrics[month][metrics.integration].merges += metrics.merges;
             existingMetrics[month][metrics.integration].reviews += metrics.reviews;
-            existingMetrics[month][metrics.integration].changes += metrics.changes;
 
             // Update the database with the new metrics
             await client.query(
@@ -159,7 +161,6 @@ export const getContributions = async (teamId: number, startDate: string, endDat
             integration: string;
             merges: number;
             reviews: number;
-            changes: number;
         }[] = [];
 
         result.rows.forEach((member) => {
@@ -187,7 +188,6 @@ export const getContributions = async (teamId: number, startDate: string, endDat
                                     integration,
                                     merges: Number(values.merges) || 0,
                                     reviews: Number(values.reviews) || 0,
-                                    changes: Number(values.changes) || 0,
                                 });
                             } else {
                                 console.warn(
