@@ -170,32 +170,28 @@ const TeamMemberMetricsTable = () => {
     return (
         <div className="overflow-auto p-4">
             <h2 className="text-2xl font-bold mb-4">Team Member Metrics</h2>
-            <div className="shadow-md rounded-md">
-                <table className="min-w-full border border-border bg-card text-card-foreground rounded-md">
-                    <thead className="bg-secondary text-secondary-foreground">
+            <div className="rounded-md border bg-card p-4">
+                <table className="w-full caption-bottom text-sm">
+                    <thead className="[&_tr]:border-b bg-secondary text-secondary-foreground">
                         <tr>
-                            <th className="p-2 text-left">Team Member</th>
+                            <th className="h-12 px-4 text-left align-middle font-medium">Team Member</th>
                             {months.map((month) => (
-                                <th key={month} className="p-2 text-center">
+                                <th key={month} className="h-12 px-4 text-center align-middle font-medium">
                                     {month}
                                 </th>
                             ))}
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-border">
-                        {teamMembers.map((member, i) => (
+                    <tbody className="[&_tr:last-child]:border-0">
+                        {teamMembers.map((member) => (
                             <React.Fragment key={member.id}>
                                 <tr
                                     onClick={() => toggleExpandMember(member.id)}
-                                    className={`
-                        cursor-pointer
-                        hover:bg-accent/10
-                        ${i % 2 === 0 ? 'bg-muted/20' : ''}
-                      `}
+                                    className="border-b transition-colors hover:bg-muted/50"
                                 >
-                                    <td className="p-2 font-semibold">{member.fullName}</td>
+                                    <td className="p-4 align-middle">{member.fullName}</td>
                                     {months.map((month) => (
-                                        <td key={month} className="p-2 text-center">
+                                        <td key={month} className="p-4 align-middle text-center">
                                             {member.metrics?.[month]
                                                 ? getAggregatedValue(member.metrics[month])
                                                 : '-'}
