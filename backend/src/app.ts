@@ -5,7 +5,6 @@ import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import { startScheduler } from './jobs/scheduler';
 
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
 dotenv.config({ path: envFile });
@@ -58,10 +57,6 @@ indexRouter.use('/team', teamRoutes);
 // Applying Routes to the App
 app.use(process.env.SERVER_ROUTE || '/', indexRouter);
 
-// Run integration workers
-startScheduler();
-
-// Start the server
 app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
 });
