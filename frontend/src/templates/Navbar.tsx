@@ -35,11 +35,11 @@ export const Navbar = () => {
                 </li>
 
                 <li>
-                    <Link href="https://www.github.com/engimetric/engimetric-core">Documentation</Link>
+                    <Link href="https://github.com/engimetric/engimetric-core/wiki">Documentation</Link>
                 </li>
 
                 <li>
-                    <Link href="https://www.github.com/engimetric/engimetric-core">Community</Link>
+                    <Link href="https://github.com/engimetric/engimetric-core/discussions">Community</Link>
                 </li>
 
                 <li>

@@ -24,7 +24,7 @@ export const Hero = () => {
 
                             <a
                                 className={buttonVariants({ variant: 'outline', size: 'lg' })}
-                                href="https://www.github.com/engimetric/engimetric-core"
+                                href="https://www.github.com/engimetric/engimetric-core/wiki"
                             >
                                 Explore Documentation
                                 <ArrowRightIcon className="ml-1 size-5" />
