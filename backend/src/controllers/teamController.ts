@@ -1,5 +1,11 @@
 import { Request, Response } from 'express';
-import { createOrUpdateTeam, fetchAllTeams, fetchTeamById, deleteTeam } from '../utils/teamUtils';
+import {
+    createOrUpdateTeam,
+    fetchAllTeams,
+    fetchTeamById,
+    deleteTeam,
+    ensureTeamHasDefaults,
+} from '../utils/teamUtils';
 import { fetchUserTeams, addUserToTeam } from '../utils/userTeamUtils';
 
 /**
@@ -84,21 +90,30 @@ export const saveTeam = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
+        // Prepare new or updated team object
         const newTeam = {
             name,
             slug: name.toLowerCase().replace(/\s+/g, '-'),
             description,
             ownerId: userId,
-            createdAt: new Date(),
-            updatedAt: new Date(),
         };
 
+        // 1. Create or update the team in the "teams" table
         const team = await createOrUpdateTeam(newTeam);
+
+        // 2. Ensure the user is attached to the team (admin by default)
         await addUserToTeam(userId, team.id, 'admin');
-        res.status(200).json({ message: 'Team saved successfully' });
+
+        // 3. Ensure default records exist in other tables (subscriptions, settings, etc.)
+        await ensureTeamHasDefaults(team.id);
+
+        // 4. Respond
+        res.status(200).json({ message: 'Team saved successfully', team });
+        return;
     } catch (error) {
         console.error('Error saving team:', error);
         res.status(500).json({ message: 'Failed to save team' });
+        return;
     }
 };
 
@@ -107,7 +122,7 @@ export const saveTeam = async (req: Request, res: Response): Promise<void> => {
  */
 export const deleteTeamById = async (req: Request, res: Response): Promise<void> => {
     try {
-        const teamId = parseInt(req.params.id);
+        const teamId = parseInt(req.params.id, 10);
         await deleteTeam(teamId);
         res.status(200).json({ message: 'Team deleted successfully' });
     } catch (error) {

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -119,6 +120,18 @@ export default function TeamPage() {
                                 </div>
                             </div>
                         ))}
+                        <Link
+                            href="/team/create"
+                            className="cursor-pointer bg-white dark:bg-gray-800 shadow-md
+                           rounded-md p-4 hover:shadow-lg transition-shadow
+                           flex flex-col justify-between"
+                        >
+                            <div>
+                                <h2 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">
+                                    Create a New Team
+                                </h2>
+                            </div>
+                        </Link>
                     </div>
                 )}
             </div>

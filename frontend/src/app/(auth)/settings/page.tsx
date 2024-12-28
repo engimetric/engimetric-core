@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { toLower, startCase } from 'lodash';
+import { useRouter } from 'next/navigation';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -15,10 +16,13 @@ interface Settings {
 }
 
 const SettingsPage = () => {
+    const router = useRouter();
+
     const [settings, setSettings] = useState<Settings>({
         GitHub: { enabled: true, token: '', org: '' },
         Jira: { enabled: false, domain: '', token: '' },
     });
+    const [teamId, setTeamId] = useState<number | null>(null);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -41,10 +45,11 @@ const SettingsPage = () => {
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 const data = await response.json();
                 setSettings(data?.integrations || {});
+                setTeamId(data?.teamId);
                 setError(null);
-            } catch (err) {
+            } catch (err: Error | any) {
                 console.error('Error fetching settings:', err);
-                setError(`Failed to fetch settings. Please try again.`);
+                setError(err?.message || `Failed to fetch settings. Please try again.`);
             } finally {
                 setLoading(false);
             }
@@ -130,6 +135,27 @@ const SettingsPage = () => {
     };
 
     /**
+     * Delete Team
+     */
+    const handleDelete = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/team/${teamId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data?.message || 'Failed to delete team.');
+            }
+            router.push('/');
+        } catch (error) {
+            console.error('Error deleting team.', error);
+            setSaveError((error as Error)?.message || 'Failed to delete team. Please try again.');
+        }
+    };
+
+    /**
      * Render Loading State
      */
     if (loading) {
@@ -148,7 +174,7 @@ const SettingsPage = () => {
      */
     return (
         <div className="container mx-auto py-8 px-6">
-            <h1 className="text-4xl font-bold mb-8 text-center">Integration Settings</h1>
+            <h1 className="text-4xl font-bold mb-8">Settings</h1>
 
             {/* Success and Error Messages */}
             {successMessage && (
@@ -213,6 +239,18 @@ const SettingsPage = () => {
             >
                 Save Settings
             </button>
+
+            <hr />
+
+            <div className="mt-8">
+                <h2 className="text-2xl font-semibold mb-4">Danger Zone</h2>
+                <button
+                    onClick={handleDelete}
+                    className="bg-red-500 hover:bg-red-600 text-white py-3 px-6 rounded-lg font-semibold text-lg"
+                >
+                    Delete Account
+                </button>
+            </div>
         </div>
     );
 };
