@@ -104,7 +104,7 @@ const SettingsPage = () => {
             displaySuccess('✅ Settings saved successfully!');
         } catch (error) {
             console.error('Error saving settings:', error);
-            setSaveError('❌ Failed to save settings. Please try again.');
+            setSaveError((error as Error)?.message || '❌ Failed to save settings. Please try again.');
         }
     };
 
@@ -118,12 +118,14 @@ const SettingsPage = () => {
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
             });
-
-            if (!response.ok) throw new Error('Failed to sync integration');
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data?.message || 'Failed to sync integration');
+            }
             displaySuccess(`✅ ${integration} synced successfully!`);
         } catch (error) {
             console.error(`Error syncing ${integration}:`, error);
-            setSaveError(`❌ Failed to sync ${integration}. Please try again.`);
+            setSaveError((error as Error)?.message || `❌ Failed to sync ${integration}. Please try again.`);
         }
     };
 

@@ -153,10 +153,10 @@ export const fullSync = async (req: Request, res: Response): Promise<void> => {
         );
 
         res.status(200).json({ message: 'GitHub data successfully updated.' });
-    } catch (error) {
+    } catch (error: Error | any) {
         console.error('❌ Error updating GitHub data:', error);
         res.status(500).json({
-            message: 'Failed to full sync.',
+            message: error?.message || 'Failed to full sync.',
             error: (error as Error).message,
         });
     }
