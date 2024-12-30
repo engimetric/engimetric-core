@@ -25,7 +25,13 @@ const pool = new Pool({
  */
 export const fetchAllUsers = async (): Promise<User[]> => {
     const result = await pool.query('SELECT * FROM users');
-    return result.rows;
+    return result.rows.map((user) => ({
+        id: user.id,
+        email: user.email,
+        password: user.password,
+        createdAt: user.created_at,
+        updatedAt: user.updated_at,
+    }));
 };
 
 /**
@@ -39,7 +45,14 @@ export const fetchUserById = async (userId: number): Promise<User | undefined> =
     const result = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
     if (result.rows.length === 0) return undefined;
 
-    return result.rows[0];
+    const user = result.rows[0];
+    return {
+        id: user.id,
+        email: user.email,
+        password: user.password,
+        createdAt: user.created_at,
+        updatedAt: user.updated_at,
+    };
 };
 
 /**

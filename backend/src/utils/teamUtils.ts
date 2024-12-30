@@ -88,8 +88,7 @@ export const ensureTeamHasDefaults = async (teamId: number): Promise<void> => {
             [teamId],
         );
 
-        // 3. Insert other default rows (sync_states, etc.) if desired...
-        // For example:
+        // 3. Insert other default rows (sync_states, etc.) if needed
         await client.query(
             `
             INSERT INTO sync_states (team_id, integration, is_syncing, last_started_at, last_heartbeat_at, last_synced_at, last_failed_at)
@@ -115,7 +114,18 @@ export const ensureTeamHasDefaults = async (teamId: number): Promise<void> => {
  */
 export const fetchAllTeams = async (): Promise<Team[]> => {
     const result = await pool.query('SELECT * FROM teams');
-    return result.rows;
+    return result.rows.map((team) => ({
+        id: team.id,
+        slug: team.slug,
+        name: team.name,
+        description: team.description,
+        ownerId: team.owner_id,
+        isFrozen: team.is_frozen,
+        frozenReason: team.frozen_reason,
+        subscriptionId: team.subscription_id,
+        createdAt: team.created_at,
+        updatedAt: team.updated_at,
+    }));
 };
 
 /**
@@ -132,7 +142,20 @@ export const fetchTeamById = async (teamId: number): Promise<Team | undefined> =
         return undefined;
     }
 
-    return result.rows[0];
+    const row = result.rows[0];
+
+    return {
+        id: row.id,
+        slug: row.slug,
+        name: row.name,
+        description: row.description,
+        ownerId: row.owner_id,
+        isFrozen: row.is_frozen,
+        frozenReason: row.frozen_reason,
+        subscriptionId: row.subscription_id,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+    };
 };
 
 /**
@@ -197,7 +220,21 @@ export const findTeamByNameOrSlug = async (teamNameOrSlug: string) => {
 
     try {
         const result = await pool.query(query, values);
-        return result.rows[0] || null;
+        const row = result.rows[0];
+        return row
+            ? {
+                  id: row.id,
+                  slug: row.slug,
+                  name: row.name,
+                  description: row.description,
+                  ownerId: row.owner_id,
+                  isFrozen: row.is_frozen,
+                  frozenReason: row.frozen_reason,
+                  subscriptionId: row.subscription_id,
+                  createdAt: row.created_at,
+                  updatedAt: row.updated_at,
+              }
+            : null;
     } catch (error) {
         logger.error('Error finding team by name or slug:', error);
         throw error;
