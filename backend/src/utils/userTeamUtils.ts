@@ -33,7 +33,13 @@ export const fetchUserTeams = async (userId: number) => {
 
     try {
         const result = await pool.query(query, values);
-        return result.rows;
+
+        return result.rows.map((row) => ({
+            id: row.id,
+            name: row.name,
+            slug: row.slug,
+            role: row.role,
+        }));
     } catch (error) {
         logger.error('Error fetching user teams:', error);
         throw error;
