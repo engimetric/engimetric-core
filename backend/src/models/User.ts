@@ -13,14 +13,12 @@
  * email: '[email protected]',
  * password: 'hashed-password',
  * teamId: 1,
- * admin: true
  * }
  */
 export interface User {
     id: number;
     email: string;
     password: string;
-    admin: boolean;
     createdAt: Date;
     updatedAt: Date;
 }
