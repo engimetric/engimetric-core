@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import { User } from '../models/User';
 import dotenv from 'dotenv';
+import logger from './logger';
 
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
 dotenv.config({ path: envFile });
@@ -75,7 +76,7 @@ export const createOrUpdateUser = async (user: { email: string; password: string
         const result = await pool.query(query, values);
         return result.rows[0];
     } catch (error) {
-        console.error('Error creating/updating user:', error);
+        logger.error('Error creating/updating user:', error);
         throw error;
     }
 };

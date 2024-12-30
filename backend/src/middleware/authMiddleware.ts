@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import logger from '../utils/logger';
 
 dotenv.config();
 
@@ -38,7 +39,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
 
         next();
     } catch (err) {
-        console.error('Authentication error:', err);
+        logger.error('Authentication error:', err);
         res.status(401).json({ message: 'Unauthorized: Invalid token' });
     }
 };

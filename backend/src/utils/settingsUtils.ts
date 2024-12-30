@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import { IntegrationSettings, Settings } from '../models/Settings';
 import dotenv from 'dotenv';
+import logger from './logger';
 
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
 dotenv.config({ path: envFile });
@@ -37,7 +38,7 @@ export const createOrUpdateIntegrationSettings = async (teamId: number, settings
         const result = await pool.query(query, values);
         return result.rows[0];
     } catch (error) {
-        console.error('Error creating/updating integration settings:', error);
+        logger.error('Error creating/updating integration settings:', error);
         throw error;
     }
 };
@@ -49,7 +50,7 @@ export const createOrUpdateIntegrationSettings = async (teamId: number, settings
  * @example
  * ```javascript
  * const settings = await fetchAllIntegrationSettings();
- * console.log(settings);
+ * logger.info(settings);
  * // Output: [
  * //   {
  * //     teamId: 1,
@@ -83,7 +84,7 @@ export const fetchAllIntegrationSettings = async (): Promise<Settings[]> => {
  * @example
  * ```javascript
  * const settings = await fetchIntegrationSettingsByTeamId(1);
- * console.log(settings);
+ * logger.info(settings);
  * // Output: {
  * //   teamId: 1,
  * //   createdAt: '2021-08-01T00:00:00.000Z',
@@ -119,7 +120,7 @@ export const fetchIntegrationSettingsByTeamId = async (teamId: number): Promise<
  * @example
  * ```javascript
  * const settings = await fetchIntegrationSettingByName(1, 'github');
- * console.log(settings);
+ * logger.info(settings);
  * // Output: {
  * //   enabled: true,
  * //   token: 'abc123'

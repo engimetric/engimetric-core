@@ -1,6 +1,7 @@
 import { Team } from '../models/Team';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import logger from './logger';
 
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
 dotenv.config({ path: envFile });
@@ -50,7 +51,7 @@ export const createOrUpdateTeam = async (team: {
         const result = await pool.query(query, values);
         return result.rows[0];
     } catch (error) {
-        console.error('Error creating/updating team:', error);
+        logger.error('Error creating/updating team:', error);
         throw error;
     }
 };
@@ -198,7 +199,7 @@ export const findTeamByNameOrSlug = async (teamNameOrSlug: string) => {
         const result = await pool.query(query, values);
         return result.rows[0] || null;
     } catch (error) {
-        console.error('Error finding team by name or slug:', error);
+        logger.error('Error finding team by name or slug:', error);
         throw error;
     }
 };

@@ -30,7 +30,7 @@ interface MetricFilter {
  * @param teamId - The ID of the team
  * @example
  * const teamMembers = await fetchTeamMembers(1);
- * console.log(teamMembers);
+ * logger.info(teamMembers);
  * // [
  * //   {
  * //     id: 1,
@@ -91,7 +91,7 @@ export const fetchTeamMembers = async (teamId: number): Promise<TeamMember[]> =>
  * @param id - The ID of the team member
  * @example
  * const teamMember = await fetchTeamMemberById(1);
- * console.log(teamMember);
+ * logger.info(teamMember);
  * // {
  * //   id: 1,
  * //   teamId: 1,
@@ -150,7 +150,7 @@ export const fetchTeamMemberById = async (id: number): Promise<TeamMember | unde
  *   createdAt: new Date(),
  *   updatedAt: new Date(),
  * });
- * console.log('Team member created or updated successfully.');
+ * logger.info('Team member created or updated successfully.');
  */
 export const createOrUpdateTeamMember = async (teamMember: Partial<TeamMember>): Promise<void> => {
     if (teamMember.id) {
@@ -197,7 +197,7 @@ export const createOrUpdateTeamMember = async (teamMember: Partial<TeamMember>):
  * @param id - The ID of the team member
  * @example
  * await deleteTeamMember(1);
- * console.log('Team member deleted successfully.');
+ * logger.info('Team member deleted successfully.');
  */
 export const deleteTeamMember = async (id: number): Promise<void> => {
     await pool.query('DELETE FROM team_members WHERE id = $1', [id]);
@@ -211,7 +211,7 @@ export const deleteTeamMember = async (id: number): Promise<void> => {
  * @example
  * const teamMembers = await fetchTeamMembersWithAliases(1);
  * const aliases = fetchTeamMemberAliases(1);
- * console.log(aliases);
+ * logger.info(aliases);
  * // {
  * //   'alias1': 'Full Name 1',
  * //   'alias2': 'Full Name 2',
@@ -246,7 +246,7 @@ export const fetchTeamMembersWithAliases = async (teamId: number): Promise<TeamM
  * @returns A record mapping aliases to full names
  * @example
  * const aliases = await fetchTeamMemberAliases(1);
- * console.log(aliases);
+ * logger.info(aliases);
  * // {
  * //   'alias1': 'Full Name 1',
  * //   'alias2': 'Full Name 2',
@@ -352,7 +352,7 @@ export const getMetricsFromTeamMembers = (
  *       'reactions': 100,
  *   },
  * }, '2021-09');
- * console.log('Data saved successfully.');
+ * logger.info('Data saved successfully.');
  * @returns A promise that resolves when the data is saved
  * @throws Will throw an error if the data is not saved
  */

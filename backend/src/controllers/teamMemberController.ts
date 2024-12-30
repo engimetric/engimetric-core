@@ -8,6 +8,7 @@ import {
     getMetricsFromTeamMembers,
 } from '../utils/teamMemberUtils';
 import { TeamMember } from '../models/TeamMember';
+import logger from '../utils/logger';
 
 /**
  * Get all team members for the authenticated user's team
@@ -24,7 +25,7 @@ export const getTeamMembers = async (req: Request, res: Response): Promise<void>
         const members = await fetchTeamMembers(teamId);
         res.status(200).json(members);
     } catch (error) {
-        console.error('Error fetching team members:', error);
+        logger.error('Error fetching team members:', error);
         res.status(500).json({ message: 'Failed to fetch team members' });
     }
 };
@@ -56,7 +57,7 @@ export const getTeamMember = async (req: Request, res: Response): Promise<void> 
 
         res.status(200).json(member);
     } catch (error) {
-        console.error('Error fetching team member:', error);
+        logger.error('Error fetching team member:', error);
         res.status(500).json({ message: 'Failed to fetch team member' });
     }
 };
@@ -83,7 +84,7 @@ export const saveTeamMember = async (req: Request, res: Response): Promise<void>
         await createOrUpdateTeamMember(teamMember);
         res.status(200).json({ message: 'Team member saved successfully' });
     } catch (error) {
-        console.error('Error saving team member:', error);
+        logger.error('Error saving team member:', error);
         res.status(500).json({ message: 'Failed to save team member' });
     }
 };
@@ -115,7 +116,7 @@ export const removeTeamMember = async (req: Request, res: Response): Promise<voi
         await deleteTeamMember(memberId);
         res.status(200).json({ message: 'Team member deleted successfully' });
     } catch (error) {
-        console.error('Error deleting team member:', error);
+        logger.error('Error deleting team member:', error);
         res.status(500).json({ message: 'Failed to delete team member' });
     }
 };
@@ -141,7 +142,7 @@ export const getTeamMemberAliases = async (req: Request, res: Response): Promise
 
         res.status(200).json(aliases);
     } catch (error) {
-        console.error('Error fetching team member aliases:', error);
+        logger.error('Error fetching team member aliases:', error);
         res.status(500).json({
             message: 'An error occurred while fetching team member aliases.',
             error: (error as Error).message,
@@ -190,7 +191,7 @@ export const getTeamMetrics = async (req: Request, res: Response): Promise<void>
 
         res.status(200).json({ teamId, metrics });
     } catch (error) {
-        console.error('Error fetching team metrics:', error);
+        logger.error('Error fetching team metrics:', error);
         res.status(500).json({
             message: 'Failed to fetch team metrics.',
             error: (error as Error).message,

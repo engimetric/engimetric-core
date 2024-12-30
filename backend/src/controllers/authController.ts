@@ -7,6 +7,7 @@ import { fetchAllUsers, createOrUpdateUser, fetchUserById } from '../utils/userU
 import { createOrUpdateTeam, findTeamByNameOrSlug } from '../utils/teamUtils';
 import { fetchUserTeams, addUserToTeam } from '../utils/userTeamUtils';
 import { createOrUpdateIntegrationSettings } from '../utils/settingsUtils';
+import logger from '../utils/logger';
 
 dotenv.config();
 
@@ -92,7 +93,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             teams,
         });
     } catch (error) {
-        console.error('Login error:', error);
+        logger.error('Login error:', error);
         res.status(500).json({ message: 'Failed to login' });
     }
 };
@@ -105,10 +106,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 export const selectTeam = async (req: Request, res: Response): Promise<void> => {
     try {
         const token = req.cookies?.authToken;
-
-        console.log('Select team request:', req.body);
-        console.log('Token:', token);
-
         if (!token) {
             res.status(401).json({ message: 'Not authenticated: Missing token' });
             return;
@@ -117,13 +114,12 @@ export const selectTeam = async (req: Request, res: Response): Promise<void> => 
         let decoded;
         try {
             decoded = jwt.verify(token, JWT_SECRET) as { userId: number };
-            console.log('Decoded:', decoded);
             if (!decoded?.userId) {
                 res.status(401).json({ message: 'Invalid token payload' });
                 return;
             }
         } catch (err) {
-            console.error('JWT verification failed:', err);
+            logger.error('JWT verification failed:', err);
             res.status(401).json({ message: 'Invalid or expired token' });
             return;
         }
@@ -156,7 +152,7 @@ export const selectTeam = async (req: Request, res: Response): Promise<void> => 
             teamId,
         });
     } catch (error) {
-        console.error('Team selection error:', error);
+        logger.error('Team selection error:', error);
         res.status(500).json({ message: 'Failed to select team' });
     }
 };
@@ -195,7 +191,7 @@ export const me = async (req: Request, res: Response): Promise<void> => {
             team,
         });
     } catch (error) {
-        console.error('Error fetching user:', error);
+        logger.error('Error fetching user:', error);
         res.status(500).json({ message: 'Failed to fetch user' });
     }
 };
@@ -272,7 +268,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             nextStep: team ? 'dashboard' : 'select_team',
         });
     } catch (error) {
-        console.error('Registration error:', error);
+        logger.error('Registration error:', error);
         res.status(500).json({ message: 'Failed to register user' });
     }
 };

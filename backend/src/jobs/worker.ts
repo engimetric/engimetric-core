@@ -2,7 +2,7 @@ import moment from 'moment';
 import { fetchTeamMembersWithAliases } from '../utils/teamMemberUtils';
 import { fetchGithubData, processPullRequest, saveData } from '../utils/githubUtils';
 import { fetchIntegrationSettingByName } from '../utils/settingsUtils';
-
+import logger from '../utils/logger';
 import { past12Months } from '../utils/commonUtils';
 
 /**
@@ -24,7 +24,7 @@ import { past12Months } from '../utils/commonUtils';
  */
 export const refreshIntegrationData = async (teamId: number, integration: string) => {
     try {
-        console.log(`🛠️ Refreshing data for Team ID: ${teamId}, Integration: ${integration}`);
+        logger.info(`🛠️ Refreshing data for Team ID: ${teamId}, Integration: ${integration}`);
 
         // Fetch Integration Settings
         const integrationSettings = await fetchIntegrationSettingByName(teamId, integration);
@@ -35,7 +35,7 @@ export const refreshIntegrationData = async (teamId: number, integration: string
         }
 
         for (const { month, startDate, endDate } of past12Months) {
-            console.log(`📅 [${integration}] Syncing Month: ${month}`);
+            logger.info(`📅 [${integration}] Syncing Month: ${month}`);
 
             let integrationData;
 
@@ -79,14 +79,14 @@ export const refreshIntegrationData = async (teamId: number, integration: string
             // Save data for the specific month
             await saveData(teamId, allData, month);
 
-            console.log(
+            logger.info(
                 `✅ Data refreshed successfully for Team ID: ${teamId}, Integration: ${integration}, Month: ${month}`,
             );
         }
 
-        console.log(`✅ All data refreshed successfully for Team ID: ${teamId}, Integration: ${integration}`);
+        logger.info(`✅ All data refreshed successfully for Team ID: ${teamId}, Integration: ${integration}`);
     } catch (error) {
-        console.error(
+        logger.error(
             `❌ Failed to refresh integration data for Team ID: ${teamId}, Integration: ${integration}`,
             error,
         );

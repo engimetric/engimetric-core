@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import logger from './logger';
 
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
 dotenv.config({ path: envFile });
@@ -34,7 +35,7 @@ export const fetchUserTeams = async (userId: number) => {
         const result = await pool.query(query, values);
         return result.rows;
     } catch (error) {
-        console.error('Error fetching user teams:', error);
+        logger.error('Error fetching user teams:', error);
         throw error;
     }
 };
@@ -61,7 +62,7 @@ export const addUserToTeam = async (userId: number, teamId: number, role: string
         const result = await pool.query(query, values);
         return result.rows[0];
     } catch (error) {
-        console.error('Error adding user to team:', error);
+        logger.error('Error adding user to team:', error);
         throw error;
     }
 };
@@ -81,7 +82,7 @@ export const removeUserFromTeam = async (userId: number, teamId: number) => {
             [userId, teamId],
         );
     } catch (error) {
-        console.error('Error removing user from team:', error);
+        logger.error('Error removing user from team:', error);
         throw new Error('Failed to remove user from team');
     }
 };
@@ -109,7 +110,7 @@ export const isUserInTeam = async (userId: number, teamId: number): Promise<bool
 
         return result?.rowCount > 0;
     } catch (error) {
-        console.error('Error checking user-team membership:', error);
+        logger.error('Error checking user-team membership:', error);
         throw new Error('Failed to verify user-team membership');
     }
 };
@@ -133,7 +134,7 @@ export const getUserTeamRole = async (userId: number, teamId: number): Promise<s
 
         return result.rows[0]?.role || null;
     } catch (error) {
-        console.error('Error fetching user role in team:', error);
+        logger.error('Error fetching user role in team:', error);
         throw new Error('Failed to fetch user role in team');
     }
 };

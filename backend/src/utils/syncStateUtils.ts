@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import logger from './logger';
 
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
 dotenv.config({ path: envFile });
@@ -27,7 +28,7 @@ export const getSyncState = async (teamId: number, integration: string) => {
         );
         return result.rows[0] || null;
     } catch (error) {
-        console.error('❌ Failed to get sync state:', error);
+        logger.error('❌ Failed to get sync state:', error);
         throw error;
     } finally {
         client.release();
@@ -51,7 +52,7 @@ export const markSyncStart = async (teamId: number, integration: string) => {
             [teamId, integration],
         );
     } catch (error) {
-        console.error('❌ Failed to mark sync start:', error);
+        logger.error('❌ Failed to mark sync start:', error);
         throw error;
     } finally {
         client.release();
@@ -69,7 +70,7 @@ export const updateHeartbeat = async (teamId: number, integration: string) => {
             [teamId, integration],
         );
     } catch (error) {
-        console.error('❌ Failed to update heartbeat:', error);
+        logger.error('❌ Failed to update heartbeat:', error);
         throw error;
     } finally {
         client.release();
@@ -87,7 +88,7 @@ export const markSyncComplete = async (teamId: number, integration: string) => {
             [teamId, integration],
         );
     } catch (error) {
-        console.error('❌ Failed to mark sync complete:', error);
+        logger.error('❌ Failed to mark sync complete:', error);
         throw error;
     } finally {
         client.release();
@@ -105,7 +106,7 @@ export const markSyncFailed = async (teamId: number, integration: string) => {
             [teamId, integration],
         );
     } catch (error) {
-        console.error('❌ Failed to mark sync failed:', error);
+        logger.error('❌ Failed to mark sync failed:', error);
         throw error;
     } finally {
         client.release();
@@ -124,7 +125,7 @@ export const detectStaleSyncs = async () => {
         );
         return result.rows;
     } catch (error) {
-        console.error('❌ Failed to detect stale syncs:', error);
+        logger.error('❌ Failed to detect stale syncs:', error);
         throw error;
     } finally {
         client.release();

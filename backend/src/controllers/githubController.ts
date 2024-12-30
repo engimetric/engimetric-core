@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import { fetchGithubData, processPullRequest, getContributions } from '../utils/githubUtils';
 import { syncIntegrationData } from '../utils/integrationUtils';
 import { TeamMember } from '../models/TeamMember';
+import logger from '../utils/logger';
 
 /**
  * Generic Data Processor for GitHub Integration
@@ -21,8 +22,6 @@ const processGithubData = (
     teamMembers: TeamMember[],
 ): Record<number, Record<string, number>> => {
     const aggregatedData: Record<number, Record<string, number>> = {};
-
-    console.log('teamMembers:', teamMembers);
 
     for (const pr of rawData) {
         const prData = processPullRequest(pr, teamMembers);
@@ -88,7 +87,7 @@ export const syncByMonth = async (req: Request, res: Response): Promise<void> =>
             return;
         }
 
-        console.log(`🔄 Updating GitHub data for Team ID: ${teamId} in month: ${month}`);
+        logger.info(`🔄 Updating GitHub data for Team ID: ${teamId} in month: ${month}`);
 
         await syncIntegrationData(
             teamId,
@@ -101,7 +100,7 @@ export const syncByMonth = async (req: Request, res: Response): Promise<void> =>
 
         res.status(200).json({ message: 'GitHub data successfully updated.' });
     } catch (error) {
-        console.error('❌ Error updating GitHub data:', error);
+        logger.error('❌ Error updating GitHub data:', error);
         res.status(500).json({
             message: 'Failed to update contributions.',
             error: (error as Error).message,
@@ -141,7 +140,7 @@ export const fullSync = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        console.log(`🔄 Updating GitHub data for Team ID: ${teamId} in month: ${month}`);
+        logger.info(`🔄 Updating GitHub data for Team ID: ${teamId} in month: ${month}`);
 
         await syncIntegrationData(
             teamId,
@@ -154,7 +153,7 @@ export const fullSync = async (req: Request, res: Response): Promise<void> => {
 
         res.status(200).json({ message: 'GitHub data successfully updated.' });
     } catch (error: Error | any) {
-        console.error('❌ Error updating GitHub data:', error);
+        logger.error('❌ Error updating GitHub data:', error);
         res.status(500).json({
             message: error?.message || 'Failed to full sync.',
             error: (error as Error).message,
@@ -224,7 +223,7 @@ export const getGithubContributions = async (req: Request, res: Response): Promi
 
         res.status(200).json(contributions);
     } catch (error) {
-        console.error('❌ Error retrieving contributions:', error);
+        logger.error('❌ Error retrieving contributions:', error);
         res.status(500).json({
             message: 'Failed to retrieve contributions.',
             error: (error as Error).message,

@@ -3,6 +3,7 @@ import { fetchTeamMembersWithAliases } from './teamMemberUtils';
 import { saveData } from './teamMemberUtils';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import logger from './logger';
 
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
 dotenv.config({ path: envFile });
@@ -39,7 +40,7 @@ export const syncIntegrationData = async (
     processData: (data: any[], teamMembers: any[]) => Record<number, Record<string, number>>,
     monthsBack: number = 12,
 ) => {
-    console.log(`🔄 [${integration}] Syncing data for Team ID: ${teamId}`);
+    logger.debug(`🔄 [${integration}] Syncing data for Team ID: ${teamId}`);
 
     const client = await pool.connect();
     try {
@@ -60,7 +61,7 @@ export const syncIntegrationData = async (
             const startDate = moment(month).startOf('month').format('YYYY-MM-DD');
             const endDate = moment(month).endOf('month').format('YYYY-MM-DD');
 
-            console.log(`📅 [${integration}] Syncing Month: ${month}`);
+            logger.debug(`📅 [${integration}] Syncing Month: ${month}`);
 
             const rawData = await fetchData(integrationSettings, startDate, endDate);
 
@@ -97,9 +98,9 @@ export const syncIntegrationData = async (
             saveData(teamId, formattedData, month);
         }
 
-        console.log(`✅ [${integration}] Data synced successfully for Team ID: ${teamId}`);
+        logger.debug(`✅ [${integration}] Data synced successfully for Team ID: ${teamId}`);
     } catch (error) {
-        console.error(`🚨 Error syncing [${integration}] data:`, error);
+        logger.error(`🚨 Error syncing [${integration}] data:`, error);
         throw error;
     } finally {
         client.release();

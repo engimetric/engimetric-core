@@ -1,8 +1,9 @@
 import { Octokit } from '@octokit/rest';
+import dotenv from 'dotenv';
 import { TeamMember } from '../models/TeamMember';
 import { Pool } from 'pg';
 import { IntegrationSettings } from 'models/Settings';
-import dotenv from 'dotenv';
+import logger from './logger';
 
 const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
 dotenv.config({ path: envFile });
@@ -33,7 +34,7 @@ export const fetchGithubData = async (
     const octokit = new Octokit({ auth: token });
 
     try {
-        console.log(
+        logger.info(
             `🔄 Fetching GitHub Pull Requests for org: ${org}, range: ${range.startDate} to ${range.endDate}`,
         );
 
@@ -47,10 +48,10 @@ export const fetchGithubData = async (
             (response) => response.data.items, // Extract items from each page
         );
 
-        console.log(`✅ Fetched ${results.length} Pull Requests from GitHub`);
+        logger.info(`✅ Fetched ${results.length} Pull Requests from GitHub`);
         return results;
     } catch (error) {
-        console.error(`🚨 Error fetching GitHub data: ${(error as Error).message}`);
+        logger.error(`🚨 Error fetching GitHub data: ${(error as Error).message}`);
         throw error;
     }
 };
@@ -76,7 +77,7 @@ export const processPullRequest = (
         return null;
     }
 
-    console.log(`🔍 Matched GitHub user '${userLogin}' with team member '${matchingMember.fullName}'`);
+    logger.debug(`🔍 Matched GitHub user '${userLogin}' with team member '${matchingMember.fullName}'`);
 
     return {
         [matchingMember.id]: {
@@ -133,7 +134,7 @@ export const saveData = async (
         await client.query('COMMIT');
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error(`Error saving metrics to database: ${error}`);
+        logger.error(`Error saving metrics to database: ${error}`);
         throw error;
     } finally {
         client.release();
@@ -206,7 +207,7 @@ export const getContributions = async (teamId: number, startDate: string, endDat
 
         return contributions;
     } catch (error) {
-        console.error(`Error retrieving contributions from database: ${error}`);
+        logger.error(`Error retrieving contributions from database: ${error}`);
         throw error;
     } finally {
         client.release();

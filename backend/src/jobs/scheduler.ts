@@ -10,6 +10,7 @@ import {
     detectStaleSyncs,
 } from '../utils/syncStateUtils';
 import * as GitHubIntegration from '../integrations/github';
+import logger from '../utils/logger';
 
 const INTEGRATION_HANDLERS: Record<string, (teamId: number) => Promise<void>> = {
     GitHub: GitHubIntegration.syncIntegration,
@@ -43,7 +44,7 @@ const scheduleTeamSync = (teamId: number, slot: number) => {
     const cronExpression = `${minute} ${hour} * * *`;
 
     cron.schedule(cronExpression, async () => {
-        console.log(`⏳ Syncing Team ID: ${teamId} at ${hour}:${minute}`);
+        logger.info(`⏳ Syncing Team ID: ${teamId} at ${hour}:${minute}`);
         const settings = await fetchIntegrationSettingsByTeamId(teamId);
 
         for (const [integration, config] of Object.entries(settings?.integrations || {})) {
@@ -61,12 +62,12 @@ const scheduleTeamSync = (teamId: number, slot: number) => {
 
             try {
                 await markSyncStart(teamId, integration);
-                console.log(`🚀 Syncing integration '${integration}' for Team ID: ${teamId}`);
+                logger.info(`🚀 Syncing integration '${integration}' for Team ID: ${teamId}`);
 
                 // Heartbeat loop to ensure active status
                 const heartbeatInterval = setInterval(
                     async () => {
-                        console.log(`💓 Heartbeat for Team ID: ${teamId}, Integration: ${integration}`);
+                        logger.info(`💓 Heartbeat for Team ID: ${teamId}, Integration: ${integration}`);
                         await updateHeartbeat(teamId, integration);
                     },
                     2 * 60 * 1000,
@@ -77,13 +78,13 @@ const scheduleTeamSync = (teamId: number, slot: number) => {
                 clearInterval(heartbeatInterval);
                 await markSyncComplete(teamId, integration);
             } catch (error) {
-                console.error(`❌ Sync failed for '${integration}' on Team ID: ${teamId}`, error);
+                logger.error(`❌ Sync failed for '${integration}' on Team ID: ${teamId}`, error);
                 await markSyncFailed(teamId, integration);
             }
         }
     });
 
-    console.log(`✅ Scheduled Team ID: ${teamId} at ${hour}:${minute}`);
+    logger.info(`✅ Scheduled Team ID: ${teamId} at ${hour}:${minute}`);
 };
 
 /**
@@ -100,7 +101,7 @@ const scheduleTeamSync = (teamId: number, slot: number) => {
  * @throws Error if the stale sync states could not be handled
  */
 const handleStaleSyncs = async () => {
-    console.log('🔍 Checking for stale sync states...');
+    logger.info('🔍 Checking for stale sync states...');
     const staleSyncs = await detectStaleSyncs();
 
     for (const { team_id, integration } of staleSyncs) {
@@ -110,7 +111,7 @@ const handleStaleSyncs = async () => {
         await markSyncFailed(team_id, integration);
     }
 
-    console.log('✅ Stale sync states handled.');
+    logger.info('✅ Stale sync states handled.');
 };
 
 /**
@@ -133,7 +134,7 @@ const handleStaleSyncs = async () => {
  * @throws Error if the scheduler fails to start
  */
 export const startScheduler = async () => {
-    console.log('⏰ Initializing Scheduler...');
+    logger.info('⏰ Initializing Scheduler...');
 
     // Handle stale sync states every 10 minutes
     cron.schedule('*/10 * * * *', async () => {
@@ -150,9 +151,9 @@ export const startScheduler = async () => {
 
     // Daily reset stale syncs at 11:45 PM
     cron.schedule('45 23 * * *', async () => {
-        console.log('🔄 Resetting stale sync states...');
+        logger.info('🔄 Resetting stale sync states...');
         await handleStaleSyncs();
     });
 
-    console.log('✅ Scheduler started: Team sync staggered, stale syncs monitored, heartbeat active.');
+    logger.info('✅ Scheduler started: Team sync staggered, stale syncs monitored, heartbeat active.');
 };
