@@ -1,9 +1,9 @@
-import moment from 'moment';
 import { fetchTeamMembersWithAliases } from '../utils/teamMemberUtils';
 import { fetchGithubData, processPullRequest, saveData } from '../utils/githubUtils';
 import { fetchIntegrationSettingByName } from '../utils/settingsUtils';
 import logger from '../utils/logger';
 import { past12Months } from '../utils/commonUtils';
+import { fetchTeamById } from '../utils/teamUtils';
 
 /**
  * Refresh Integration Data
@@ -25,6 +25,12 @@ import { past12Months } from '../utils/commonUtils';
 export const refreshIntegrationData = async (teamId: number, integration: string) => {
     try {
         logger.info(`🛠️ Refreshing data for Team ID: ${teamId}, Integration: ${integration}`);
+
+        const team = await fetchTeamById(teamId);
+        if (team?.isFrozen) {
+            logger.warn(`⚠️ Skipping frozen team: ${teamId}`);
+            return;
+        }
 
         // Fetch Integration Settings
         const integrationSettings = await fetchIntegrationSettingByName(teamId, integration);

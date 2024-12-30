@@ -23,40 +23,76 @@ const SettingsPage = () => {
         Jira: { enabled: false, domain: '', token: '' },
     });
     const [teamId, setTeamId] = useState<number | null>(null);
-
+    const [isFrozen, setIsFrozen] = useState<boolean>(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [saveError, setSaveError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-    /**
-     * Fetch Settings from API
-     */
+    const fetchTeam = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/team/${teamId}`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+            });
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+            const data = await response.json();
+            setIsFrozen(data?.isFrozen || false);
+            setError(null);
+        } catch (err: Error | any) {
+            console.error('Error fetching team:', err);
+            setError(err?.message || `Failed to fetch team. Please try again.`);
+        }
+    };
+
+    const fetchIntegrationSettings = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/settings/`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+            });
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+            const data = await response.json();
+            setSettings(data?.integrations || {});
+            setTeamId(data?.teamId);
+            setError(null);
+        } catch (err: Error | any) {
+            console.error('Error fetching settings:', err);
+            setError(err?.message || `Failed to fetch settings. Please try again.`);
+        }
+    };
+
     useEffect(() => {
         const fetchSettings = async () => {
-            setLoading(true);
-
             try {
-                const response = await fetch(`${API_BASE_URL}/settings/`, {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                });
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                const data = await response.json();
-                setSettings(data?.integrations || {});
-                setTeamId(data?.teamId);
-                setError(null);
-            } catch (err: Error | any) {
-                console.error('Error fetching settings:', err);
-                setError(err?.message || `Failed to fetch settings. Please try again.`);
+                setLoading(true);
+
+                // Fetch integration settings and set teamId
+                await fetchIntegrationSettings();
             } finally {
                 setLoading(false);
             }
         };
 
         fetchSettings();
-    }, []);
+    }, []); // Run only once on component mount
+
+    useEffect(() => {
+        const fetchTeamData = async () => {
+            if (teamId !== null) {
+                try {
+                    setLoading(true);
+                    await fetchTeam();
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+
+        fetchTeamData();
+    }, [teamId]); // Run whenever teamId changes
 
     /**
      * Handle Integration Toggle
@@ -96,6 +132,11 @@ const SettingsPage = () => {
      * Save Settings
      */
     const handleSave = async () => {
+        if (isFrozen) {
+            setSaveError('❌ Team is frozen, unable to save settings.');
+            return;
+        }
+
         try {
             const response = await fetch(`${API_BASE_URL}/settings/`, {
                 method: 'POST',
@@ -117,6 +158,11 @@ const SettingsPage = () => {
      * Sync Integration
      */
     const handleSync = async (integration: string) => {
+        if (isFrozen) {
+            setSaveError('❌ Team is frozen, unable to sync integrations.');
+            return;
+        }
+
         try {
             const response = await fetch(`${API_BASE_URL}/${toLower(integration)}/full-sync`, {
                 method: 'POST',
@@ -187,54 +233,60 @@ const SettingsPage = () => {
                     {saveError}
                 </div>
             )}
+            <fieldset disabled={isFrozen} className={`${isFrozen ? 'opacity-50 pointer-events-none' : ''}`}>
+                {Object.entries(settings).map(([integration, data]) => (
+                    <div key={integration} className="bg-gray-800 text-white rounded-lg shadow-md p-6 mb-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-2xl font-semibold">{integration} Settings</h2>
+                            <div className="flex items-center gap-4">
+                                <label className="flex items-center cursor-pointer">
+                                    <span className="mr-2">Enable</span>
+                                    <input
+                                        type="checkbox"
+                                        checked={data?.enabled}
+                                        onChange={() => handleToggle(integration)}
+                                        className="w-5 h-5 accent-purple-500"
+                                    />
+                                </label>
+                                <button
+                                    onClick={() => handleSync(integration)}
+                                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm"
+                                >
+                                    Sync
+                                </button>
+                            </div>
+                        </div>
 
-            {Object.entries(settings).map(([integration, data]) => (
-                <div key={integration} className="bg-gray-800 text-white rounded-lg shadow-md p-6 mb-6">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-2xl font-semibold">{integration} Settings</h2>
-                        <div className="flex items-center gap-4">
-                            <label className="flex items-center cursor-pointer">
-                                <span className="mr-2">Enable</span>
-                                <input
-                                    type="checkbox"
-                                    checked={data?.enabled}
-                                    onChange={() => handleToggle(integration)}
-                                    className="w-5 h-5 accent-purple-500"
-                                />
-                            </label>
-                            <button
-                                onClick={() => handleSync(integration)}
-                                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm"
-                            >
-                                Sync
-                            </button>
+                        {/* Render Fields Dynamically */}
+                        <div className={`${data?.enabled ? '' : 'opacity-50 pointer-events-none'}`}>
+                            {Object.entries(data).map(([key, value]) => {
+                                if (key === 'enabled') return null;
+
+                                return (
+                                    <div className="mb-4" key={key}>
+                                        <label className="block text-sm font-medium mb-2">
+                                            {startCase(key)}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={value as string}
+                                            onChange={(e) =>
+                                                handleInputChange(integration, key, e.target.value)
+                                            }
+                                            className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:outline-none"
+                                            placeholder={`Enter ${startCase(key)}`}
+                                        />
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
-
-                    {/* Render Fields Dynamically */}
-                    <div className={`${data?.enabled ? '' : 'opacity-50 pointer-events-none'}`}>
-                        {Object.entries(data).map(([key, value]) => {
-                            if (key === 'enabled') return null;
-
-                            return (
-                                <div className="mb-4" key={key}>
-                                    <label className="block text-sm font-medium mb-2">{startCase(key)}</label>
-                                    <input
-                                        type="text"
-                                        value={value as string}
-                                        onChange={(e) => handleInputChange(integration, key, e.target.value)}
-                                        className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white focus:outline-none"
-                                        placeholder={`Enter ${startCase(key)}`}
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            ))}
+                ))}
+            </fieldset>
 
             <button
                 onClick={handleSave}
+                disabled={isFrozen}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold text-lg"
             >
                 Save Settings

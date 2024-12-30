@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { IntegrationSettings } from '../models/Settings';
 import { createOrUpdateIntegrationSettings, fetchIntegrationSettingsByTeamId } from '../utils/settingsUtils';
 import logger from '../utils/logger';
+import { fetchTeamById } from 'utils/teamUtils';
 
 /**
  * Update or create integration settings for a team.
@@ -17,6 +18,12 @@ export const updateTeamSettings = async (req: Request, res: Response): Promise<v
         }
 
         const { teamId } = user;
+
+        const team = await fetchTeamById(teamId);
+        if (team?.isFrozen) {
+            res.status(403).json({ message: 'Team is frozen, unable to update' });
+            return;
+        }
 
         if (!integrationSettings || typeof integrationSettings !== 'object') {
             res.status(400).json({ message: 'Invalid settings data' });

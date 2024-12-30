@@ -1,6 +1,7 @@
 import moment from 'moment';
 import { Request, Response } from 'express';
 import { fetchGithubData, processPullRequest, getContributions } from '../utils/githubUtils';
+import { fetchTeamById } from '../utils/teamUtils';
 import { syncIntegrationData } from '../utils/integrationUtils';
 import { TeamMember } from '../models/TeamMember';
 import logger from '../utils/logger';
@@ -87,6 +88,12 @@ export const syncByMonth = async (req: Request, res: Response): Promise<void> =>
             return;
         }
 
+        const team = await fetchTeamById(teamId);
+        if (team?.isFrozen) {
+            res.status(403).json({ message: 'Team is frozen, unable to sync' });
+            return;
+        }
+
         logger.info(`🔄 Updating GitHub data for Team ID: ${teamId} in month: ${month}`);
 
         await syncIntegrationData(
@@ -137,6 +144,12 @@ export const fullSync = async (req: Request, res: Response): Promise<void> => {
 
         if (!teamId) {
             res.status(400).json({ message: 'Required parameter "teamId" is missing.' });
+            return;
+        }
+
+        const team = await fetchTeamById(teamId);
+        if (team?.isFrozen) {
+            res.status(403).json({ message: 'Team is frozen, unable to full sync' });
             return;
         }
 

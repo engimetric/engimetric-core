@@ -1,5 +1,5 @@
 import express from 'express';
-import { getTeamsByUserId, saveTeam, deleteTeamById } from '../controllers/teamController';
+import { getTeamsByUserId, saveTeam, deleteTeamById, getTeamById } from '../controllers/teamController';
 import { authenticate } from '../middleware/authMiddleware';
 
 const router = express.Router();
@@ -26,9 +26,26 @@ const router = express.Router();
  * ]
  * @param req - The request object
  * @param res - The response object
- * @returns The teams
  */
 router.get('/', authenticate, getTeamsByUserId);
+
+/**
+ * @route GET /teams/:id
+ * @description Get a team by ID
+ * @access Protected
+ * @returns {Object} - Team object
+ * @throws {500} - If an error occurs
+ * @example
+ * GET /teams/1
+ * {
+ * "id": 1,
+ * "name": "Team Name",
+ * "description": "Team Description"
+ * }
+ * @param req - The request object
+ * @param res - The response object
+ */
+router.get('/:id', authenticate, getTeamById);
 
 /**
  * @route POST /teams
@@ -44,7 +61,6 @@ router.get('/', authenticate, getTeamsByUserId);
  * }
  * @param req - The request object
  * @param res - The response object
- * @returns The created or updated team object
  */
 router.post('/', authenticate, saveTeam);
 
@@ -58,7 +74,6 @@ router.post('/', authenticate, saveTeam);
  * DELETE /teams/1
  * @param req - The request object
  * @param res - The response object
- * @returns The deleted team
  */
 router.delete('/:id', authenticate, deleteTeamById);
 

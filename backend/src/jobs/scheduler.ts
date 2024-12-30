@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { fetchAllTeams } from '../utils/teamUtils';
+import { fetchAllTeams, fetchTeamById } from '../utils/teamUtils';
 import { fetchIntegrationSettingsByTeamId } from '../utils/settingsUtils';
 import {
     getSyncState,
@@ -45,6 +45,14 @@ const scheduleTeamSync = (teamId: number, slot: number) => {
 
     cron.schedule(cronExpression, async () => {
         logger.info(`⏳ Syncing Team ID: ${teamId} at ${hour}:${minute}`);
+
+        const team = await fetchTeamById(teamId);
+
+        if (team?.isFrozen) {
+            logger.warn(`⚠️ Skipping frozen team: ${teamId}`);
+            return;
+        }
+
         const settings = await fetchIntegrationSettingsByTeamId(teamId);
 
         for (const [integration, config] of Object.entries(settings?.integrations || {})) {
@@ -146,6 +154,10 @@ export const startScheduler = async () => {
 
     teams.forEach((team, index) => {
         const slot = index % totalSlots; // Wrap around slots if more teams than slots
+        if (team.isFrozen) {
+            logger.warn(`⚠️ Skipping frozen team: ${team.id}`);
+            return;
+        }
         scheduleTeamSync(team.id, slot);
     });
 

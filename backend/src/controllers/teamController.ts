@@ -27,10 +27,10 @@ export const getAllTeams = async (req: Request, res: Response): Promise<void> =>
  */
 export const getTeamById = async (req: Request, res: Response): Promise<void> => {
     try {
-        const teamId = req?.user?.teamId;
+        const teamId = req?.user?.teamId || parseInt(req.params.id, 10);
 
         if (!teamId) {
-            res.status(400).json({ message: 'Team ID is missing from user data.' });
+            res.status(400).json({ message: 'Team ID is missing from request.' });
             return;
         }
 
