@@ -1,5 +1,6 @@
 import { Team } from '../models/Team';
 import { runWithTransaction, runWithSchedulerTransaction } from './databaseUtils';
+import logger from './logger';
 
 /**
  * Create or update a team.
@@ -37,8 +38,8 @@ export const createOrUpdateTeam = async (
     return runWithTransaction(
         async (client) => {
             const result = await client.query(query, values);
-
-            return result.rows[0].map((row: any) => ({
+            const row = result.rows[0];
+            return {
                 id: row.id,
                 slug: row.slug,
                 name: row.name,
@@ -49,7 +50,7 @@ export const createOrUpdateTeam = async (
                 subscriptionId: row.subscription_id,
                 createdAt: row.created_at,
                 updatedAt: row.updated_at,
-            }));
+            };
         },
         { transactional: true, requestingUserId },
     );
