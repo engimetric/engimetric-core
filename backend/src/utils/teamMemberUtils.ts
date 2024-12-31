@@ -1,20 +1,6 @@
-import { Pool } from 'pg';
 import { TeamMember } from '../models/TeamMember';
-import dotenv from 'dotenv';
-
-const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
-dotenv.config({ path: envFile });
-
-const pool = new Pool({
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || '5432', 10),
-    database: process.env.DB_NAME,
-    ssl: {
-        rejectUnauthorized: false,
-    },
-});
+import { runWithTransaction, runWithSchedulerTransaction } from './databaseUtils';
+import logger from './logger';
 
 /**
  * Metric Filters for aggregation. Used to filter metrics by month, integration, and metric.
@@ -71,19 +57,26 @@ interface MetricFilter {
  * // ]
  * @returns An array of team members if found, otherwise an empty array
  */
-export const fetchTeamMembers = async (teamId: number): Promise<TeamMember[]> => {
-    const result = await pool.query('SELECT * FROM team_members WHERE team_id = $1', [teamId]);
-    return result.rows.map((row) => ({
-        id: row.id,
-        teamId: row.team_id,
-        fullName: row.full_name,
-        email: row.email,
-        userId: row.user_id,
-        aliases: row.aliases || [],
-        metrics: row.metrics || {},
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-    }));
+export const fetchTeamMembers = async (teamId: number, requestingUserId: number): Promise<TeamMember[]> => {
+    return runWithTransaction(
+        async (client) => {
+            const result = await client.query('SELECT * FROM team_members WHERE team_id = $1', [teamId]);
+            await client.query('COMMIT');
+
+            return result.rows.map((row) => ({
+                id: row.id,
+                teamId: row.team_id,
+                fullName: row.full_name,
+                email: row.email,
+                userId: row.user_id,
+                aliases: row.aliases || [],
+                metrics: row.metrics || {},
+                createdAt: row.created_at,
+                updatedAt: row.updated_at,
+            }));
+        },
+        { transactional: true, requestingUserId },
+    );
 };
 
 /**
@@ -111,85 +104,104 @@ export const fetchTeamMembers = async (teamId: number): Promise<TeamMember[]> =>
  * // }
  * @returns A team member object if found, otherwise `undefined`
  */
-export const fetchTeamMemberById = async (id: number): Promise<TeamMember | undefined> => {
-    const result = await pool.query('SELECT * FROM team_members WHERE id = $1', [id]);
-    if (result.rows.length === 0) return undefined;
+export const fetchTeamMemberById = async (
+    id: number,
+    requestingUserId: number,
+): Promise<TeamMember | undefined> => {
+    return runWithTransaction(
+        async (client) => {
+            const result = await client.query('SELECT * FROM team_members WHERE id = $1', [id]);
+            await client.query('COMMIT');
 
-    const row = result.rows[0];
-    return {
-        id: row.id,
-        teamId: row.team_id,
-        fullName: row.full_name,
-        email: row.email,
-        userId: row.user_id,
-        aliases: row.aliases || [],
-        metrics: row.metrics || {},
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-    };
+            if (result.rows.length === 0) {
+                return undefined;
+            }
+
+            const row = result.rows[0];
+            return {
+                id: row.id,
+                teamId: row.team_id,
+                fullName: row.full_name,
+                email: row.email,
+                userId: row.user_id,
+                aliases: row.aliases || [],
+                metrics: row.metrics || {},
+                createdAt: row.created_at,
+                updatedAt: row.updated_at,
+            };
+        },
+        { transactional: true, requestingUserId },
+    );
 };
 
 /**
  * Create or Update a team member. If the team member already exists, it will be updated.
+ *
  * @param teamMember - The team member object to create or update
+ * @param requestingUserId - The ID of the requesting user (for RLS enforcement)
  * @example
  * await createOrUpdateTeamMember({
  *   id: 1,
  *   teamId: 1,
  *   fullName: 'Full Name',
- *   email: ' [email protected]',
+ *   email: '[email@example.com]',
  *   userId: 1,
  *   aliases: ['alias1', 'alias2'],
- *   metrics: {
- *     '2021-09': {
- *       'slack': {
- *       'messages': 100,
- *       'reactions': 50,
- *     },
- *   },
- *   createdAt: new Date(),
- *   updatedAt: new Date(),
+ *   metrics: { '2024-09': { github: { commits: 100 } } },
  * });
- * logger.info('Team member created or updated successfully.');
  */
-export const createOrUpdateTeamMember = async (teamMember: Partial<TeamMember>): Promise<void> => {
-    if (teamMember.id) {
-        // Update existing Team Member
-        await pool.query(
-            `UPDATE team_members 
-             SET team_id = $2,
-                 full_name = $3,
-                 email = $4,
-                 user_id = $5,
-                 aliases = $6::TEXT[],
-                 metrics = $7::JSONB,
-                 updated_at = NOW()
-             WHERE id = $1`,
-            [
-                teamMember.id,
-                teamMember.teamId,
-                teamMember.fullName,
-                teamMember.email || null,
-                teamMember.userId || null,
-                teamMember.aliases || [],
-                teamMember.metrics || {},
-            ],
-        );
-    } else {
-        // Insert new Team Member
-        await pool.query(
-            `INSERT INTO team_members (team_id, full_name, email, user_id, aliases, metrics, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, $5::TEXT[], $6::JSONB, NOW(), NOW())`,
-            [
-                teamMember.teamId,
-                teamMember.fullName,
-                teamMember.email || null,
-                teamMember.userId || null,
-                teamMember.aliases || [],
-                teamMember.metrics || {},
-            ],
-        );
-    }
+export const createOrUpdateTeamMember = async (
+    teamMember: Partial<TeamMember>,
+    requestingUserId: number,
+): Promise<void> => {
+    return runWithTransaction(
+        async (client) => {
+            // Use an upsert to handle both insert and update cases
+            await client.query(
+                `
+            INSERT INTO team_members (
+                id,
+                team_id,
+                full_name,
+                email,
+                user_id,
+                aliases,
+                metrics,
+                created_at,
+                updated_at
+            ) VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5,
+                $6::TEXT[],
+                $7::JSONB,
+                NOW(),
+                NOW()
+            )
+            ON CONFLICT (id) DO UPDATE SET
+                team_id = EXCLUDED.team_id,
+                full_name = EXCLUDED.full_name,
+                email = EXCLUDED.email,
+                user_id = EXCLUDED.user_id,
+                aliases = EXCLUDED.aliases,
+                metrics = EXCLUDED.metrics,
+                updated_at = NOW();
+            `,
+                [
+                    teamMember.id || null, // `id` is nullable in insert mode
+                    teamMember.teamId,
+                    teamMember.fullName,
+                    teamMember.email || null,
+                    teamMember.userId || null,
+                    teamMember.aliases || [],
+                    teamMember.metrics || {},
+                ],
+            );
+        },
+        { transactional: true, requestingUserId },
+    );
 };
 
 /**
@@ -199,8 +211,13 @@ export const createOrUpdateTeamMember = async (teamMember: Partial<TeamMember>):
  * await deleteTeamMember(1);
  * logger.info('Team member deleted successfully.');
  */
-export const deleteTeamMember = async (id: number): Promise<void> => {
-    await pool.query('DELETE FROM team_members WHERE id = $1', [id]);
+export const deleteTeamMember = async (id: number, requestingUserId: number): Promise<void> => {
+    return runWithTransaction(
+        async (client) => {
+            await client.query('DELETE FROM team_members WHERE id = $1', [id]);
+        },
+        { transactional: true, requestingUserId },
+    );
 };
 
 /**
@@ -218,25 +235,33 @@ export const deleteTeamMember = async (id: number): Promise<void> => {
  * //   ...
  * // }
  */
-export const fetchTeamMembersWithAliases = async (teamId: number): Promise<TeamMember[]> => {
-    const result = await pool.query(
-        `SELECT id, team_id, full_name, email, user_id, aliases, metrics, created_at, updated_at 
-         FROM team_members 
-         WHERE team_id = $1`,
-        [teamId],
+export const fetchTeamMembersWithAliases = async (
+    teamId: number,
+    requestingUserId?: number,
+): Promise<TeamMember[]> => {
+    const runTransaction = requestingUserId ? runWithTransaction : runWithSchedulerTransaction;
+    return runTransaction(
+        async (client) => {
+            const result = await client.query(
+                `SELECT id, team_id, full_name, email, user_id, aliases, metrics, created_at, updated_at 
+             FROM team_members 
+             WHERE team_id = $1`,
+                [teamId],
+            );
+            return result.rows.map((row) => ({
+                id: row.id,
+                teamId: row.team_id,
+                fullName: row.full_name,
+                email: row.email,
+                userId: row.user_id,
+                aliases: row.aliases || [],
+                metrics: row.metrics || {},
+                createdAt: row.created_at,
+                updatedAt: row.updated_at,
+            }));
+        },
+        { transactional: true, requestingUserId },
     );
-
-    return result.rows.map((row) => ({
-        id: row.id,
-        teamId: row.team_id,
-        fullName: row.full_name,
-        email: row.email,
-        userId: row.user_id,
-        aliases: row.aliases || [],
-        metrics: row.metrics || {},
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-    }));
 };
 
 /**
@@ -253,20 +278,28 @@ export const fetchTeamMembersWithAliases = async (teamId: number): Promise<TeamM
  * //   ...
  * // }
  */
-export const fetchTeamMemberAliases = async (teamId: number): Promise<Record<string, string>> => {
-    const result = await pool.query(
-        `SELECT full_name, UNNEST(aliases) AS alias 
-         FROM team_members 
-         WHERE team_id = $1`,
-        [teamId],
+export const fetchTeamMemberAliases = async (
+    teamId: number,
+    requestingUserId: number,
+): Promise<Record<string, string>> => {
+    return runWithTransaction(
+        async (client) => {
+            const result = await client.query(
+                `SELECT full_name, UNNEST(aliases) AS alias 
+             FROM team_members 
+             WHERE team_id = $1`,
+                [teamId],
+            );
+
+            const aliases: Record<string, string> = {};
+            result.rows.forEach((row) => {
+                aliases[row.alias] = row.full_name;
+            });
+
+            return aliases;
+        },
+        { transactional: true, requestingUserId },
     );
-
-    const aliases: Record<string, string> = {};
-    result.rows.forEach((row) => {
-        aliases[row.alias] = row.full_name;
-    });
-
-    return aliases;
 };
 
 /**
@@ -339,69 +372,74 @@ export const getMetricsFromTeamMembers = (
  * @param teamId - The ID of the team
  * @param data - A record mapping team member IDs to their integration data
  * @param month - The month in 'YYYY-MM' format for storing metrics
+ * @param requestingUserId - The ID of the requesting user for RLS
  * @example
  * await saveData(1, {
- *   1: {
- *     'slack': {
- *       'messages': 100,
- *       'reactions': 50,
- *   },
- *   2: {
- *     'slack': {
- *       'messages': 200,
- *       'reactions': 100,
- *   },
- * }, '2021-09');
- * logger.info('Data saved successfully.');
- * @returns A promise that resolves when the data is saved
- * @throws Will throw an error if the data is not saved
+ *   1: { slack: { messages: 100, reactions: 50 } },
+ *   2: { slack: { messages: 200, reactions: 100 } },
+ * }, '2024-06', 42);
  */
 export const saveData = async (
     teamId: number,
     data: Record<number, Record<string, Record<string, number>>>,
     month: string,
+    requestingUserId?: number,
 ) => {
-    const result = await pool.query(
-        `SELECT id, metrics 
-         FROM team_members 
-         WHERE team_id = $1`,
-        [teamId],
-    );
+    const runTransaction = requestingUserId ? runWithTransaction : runWithSchedulerTransaction;
+    return runTransaction(
+        async (client) => {
+            // Fetch all team members' metrics for the given team
+            const result = await client.query(
+                `SELECT id, metrics 
+             FROM team_members 
+             WHERE team_id = $1`,
+                [teamId],
+            );
 
-    for (const row of result.rows) {
-        const memberId = row.id;
-        const existingMetrics = row.metrics || {};
+            const updates: { memberId: number; metrics: any }[] = [];
 
-        if (!existingMetrics[month]) {
-            existingMetrics[month] = {};
-        }
+            for (const row of result.rows) {
+                const memberId = row.id;
+                const existingMetrics = row.metrics || {};
 
-        if (data[memberId]) {
-            for (const [integration, metrics] of Object.entries(data[memberId])) {
-                if (!existingMetrics[month][integration]) {
-                    existingMetrics[month][integration] = {};
+                // Initialize month if not exists
+                if (!existingMetrics[month]) {
+                    existingMetrics[month] = {};
                 }
 
-                for (const [metric, value] of Object.entries(metrics)) {
-                    if (typeof value !== 'number') {
-                        console.warn(`🚨 Metric value for '${metric}' in '${integration}' is not a number.`);
-                        continue;
-                    }
+                if (data[memberId]) {
+                    for (const [integration, metrics] of Object.entries(data[memberId])) {
+                        if (!existingMetrics[month][integration]) {
+                            existingMetrics[month][integration] = {};
+                        }
 
-                    if (!existingMetrics[month][integration][metric]) {
-                        existingMetrics[month][integration][metric] = 0;
-                    }
+                        for (const [metric, value] of Object.entries(metrics)) {
+                            if (typeof value !== 'number') {
+                                logger.warn(
+                                    `🚨 Metric value for '${metric}' in '${integration}' is not a number.`,
+                                );
+                                continue;
+                            }
 
-                    existingMetrics[month][integration][metric] += value;
+                            existingMetrics[month][integration][metric] =
+                                (existingMetrics[month][integration][metric] || 0) + value;
+                        }
+                    }
                 }
+
+                updates.push({ memberId, metrics: existingMetrics });
             }
-        }
 
-        await pool.query(
-            `UPDATE team_members 
-             SET metrics = $1, updated_at = NOW() 
-             WHERE id = $2 AND team_id = $3`,
-            [JSON.stringify(existingMetrics), memberId, teamId],
-        );
-    }
+            // Bulk update team members' metrics
+            for (const update of updates) {
+                await client.query(
+                    `UPDATE team_members 
+                 SET metrics = $1, updated_at = NOW() 
+                 WHERE id = $2 AND team_id = $3`,
+                    [JSON.stringify(update.metrics), update.memberId, teamId],
+                );
+            }
+        },
+        { transactional: true, requestingUserId },
+    );
 };

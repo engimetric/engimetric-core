@@ -15,14 +15,19 @@ import logger from '../utils/logger';
  */
 export const getTeamMembers = async (req: Request, res: Response): Promise<void> => {
     try {
+        const userId = req.user?.id;
         const teamId = req.user?.teamId;
 
         if (!teamId) {
             res.status(401).json({ message: 'Unauthorized: No team ID available in user context.' });
             return;
         }
+        if (!userId) {
+            res.status(401).json({ message: 'Unauthorized: No user ID available in user context.' });
+            return;
+        }
 
-        const members = await fetchTeamMembers(teamId);
+        const members = await fetchTeamMembers(teamId, userId);
         res.status(200).json(members);
     } catch (error) {
         logger.error('Error fetching team members:', error);
@@ -37,6 +42,7 @@ export const getTeamMember = async (req: Request, res: Response): Promise<void> 
     try {
         const memberId = parseInt(req.params.id, 10);
         const teamId = req.user?.teamId;
+        const userId = req.user?.id;
 
         if (isNaN(memberId)) {
             res.status(400).json({ message: 'Invalid member ID' });
@@ -48,7 +54,12 @@ export const getTeamMember = async (req: Request, res: Response): Promise<void> 
             return;
         }
 
-        const member = await fetchTeamMemberById(memberId);
+        if (!userId) {
+            res.status(401).json({ message: 'Unauthorized: No user ID available in user context.' });
+            return;
+        }
+
+        const member = await fetchTeamMemberById(memberId, userId);
 
         if (!member || member.teamId !== teamId) {
             res.status(404).json({ message: 'Team member not found or does not belong to your team.' });
@@ -68,6 +79,12 @@ export const getTeamMember = async (req: Request, res: Response): Promise<void> 
 export const saveTeamMember = async (req: Request, res: Response): Promise<void> => {
     try {
         const teamId = req.user?.teamId;
+        const userId = req.user?.id;
+
+        if (!userId) {
+            res.status(401).json({ message: 'Unauthorized: No user ID available in user context.' });
+            return;
+        }
 
         if (!teamId) {
             res.status(401).json({ message: 'Unauthorized: No team ID available in user context.' });
@@ -81,7 +98,7 @@ export const saveTeamMember = async (req: Request, res: Response): Promise<void>
             return;
         }
 
-        await createOrUpdateTeamMember(teamMember);
+        await createOrUpdateTeamMember(teamMember, userId);
         res.status(200).json({ message: 'Team member saved successfully' });
     } catch (error) {
         logger.error('Error saving team member:', error);
@@ -96,6 +113,7 @@ export const removeTeamMember = async (req: Request, res: Response): Promise<voi
     try {
         const memberId = parseInt(req.params.id, 10);
         const teamId = req.user?.teamId;
+        const userId = req.user?.id;
 
         if (isNaN(memberId)) {
             res.status(400).json({ message: 'Invalid member ID' });
@@ -107,13 +125,18 @@ export const removeTeamMember = async (req: Request, res: Response): Promise<voi
             return;
         }
 
-        const member = await fetchTeamMemberById(memberId);
+        if (!userId) {
+            res.status(401).json({ message: 'Unauthorized: No user ID available in user context.' });
+            return;
+        }
+
+        const member = await fetchTeamMemberById(memberId, userId);
         if (!member || member.teamId !== teamId) {
             res.status(404).json({ message: 'Team member not found or does not belong to your team.' });
             return;
         }
 
-        await deleteTeamMember(memberId);
+        await deleteTeamMember(memberId, userId);
         res.status(200).json({ message: 'Team member deleted successfully' });
     } catch (error) {
         logger.error('Error deleting team member:', error);
@@ -127,13 +150,19 @@ export const removeTeamMember = async (req: Request, res: Response): Promise<voi
 export const getTeamMemberAliases = async (req: Request, res: Response): Promise<void> => {
     try {
         const teamId = req.user?.teamId;
+        const userId = req.user?.id;
 
         if (!teamId) {
             res.status(401).json({ message: 'Unauthorized: No team ID available in user context.' });
             return;
         }
 
-        const aliases = await fetchTeamMemberAliases(teamId);
+        if (!userId) {
+            res.status(401).json({ message: 'Unauthorized: No user ID available in user context.' });
+            return;
+        }
+
+        const aliases = await fetchTeamMemberAliases(teamId, userId);
 
         if (Object.keys(aliases).length === 0) {
             res.status(404).json({ message: 'No aliases found for this team.' });
@@ -184,7 +213,7 @@ export const getTeamMetrics = async (req: Request, res: Response): Promise<void>
         }
 
         // Fetch team members with aliases
-        const teamMembers = await fetchTeamMembers(teamId);
+        const teamMembers = await fetchTeamMembers(teamId, user.id);
 
         // Aggregate metrics based on filters
         const metrics = getMetricsFromTeamMembers(teamMembers);

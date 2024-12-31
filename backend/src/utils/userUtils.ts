@@ -1,21 +1,6 @@
-import { Pool } from 'pg';
-import { User } from '../models/User';
-import dotenv from 'dotenv';
 import logger from './logger';
-
-const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
-dotenv.config({ path: envFile });
-
-const pool = new Pool({
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || '5432', 10),
-    database: process.env.DB_NAME,
-    ssl: {
-        rejectUnauthorized: false,
-    },
-});
+import { User } from '../models/User';
+import { runWithTransaction, runWithSchedulerTransaction } from './databaseUtils';
 
 /**
  * Fetch all users.
@@ -24,14 +9,19 @@ const pool = new Pool({
  * @throws Error if the users could not be fetched
  */
 export const fetchAllUsers = async (): Promise<User[]> => {
-    const result = await pool.query('SELECT * FROM users');
-    return result.rows.map((user) => ({
-        id: user.id,
-        email: user.email,
-        password: user.password,
-        createdAt: user.created_at,
-        updatedAt: user.updated_at,
-    }));
+    return runWithSchedulerTransaction(
+        async (client) => {
+            const result = await client.query('SELECT * FROM users');
+            return result.rows.map((user) => ({
+                id: user.id,
+                email: user.email,
+                password: user.password,
+                createdAt: user.created_at,
+                updatedAt: user.updated_at,
+            }));
+        },
+        { transactional: false },
+    );
 };
 
 /**
@@ -41,18 +31,23 @@ export const fetchAllUsers = async (): Promise<User[]> => {
  * @returns The user object or undefined if not found
  * @throws Error if the user could not be fetched
  */
-export const fetchUserById = async (userId: number): Promise<User | undefined> => {
-    const result = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
-    if (result.rows.length === 0) return undefined;
+export const fetchUserById = async (userId: number, requestingUserId: number): Promise<User | undefined> => {
+    return runWithTransaction(
+        async (client) => {
+            const result = await client.query('SELECT * FROM users WHERE id = $1', [userId]);
+            if (result.rows.length === 0) return undefined;
 
-    const user = result.rows[0];
-    return {
-        id: user.id,
-        email: user.email,
-        password: user.password,
-        createdAt: user.created_at,
-        updatedAt: user.updated_at,
-    };
+            const user = result.rows[0];
+            return {
+                id: user.id,
+                email: user.email,
+                password: user.password,
+                createdAt: user.created_at,
+                updatedAt: user.updated_at,
+            };
+        },
+        { transactional: false, requestingUserId },
+    );
 };
 
 /**
@@ -62,16 +57,25 @@ export const fetchUserById = async (userId: number): Promise<User | undefined> =
  * @throws Error if the user could not be deleted
  * @returns Promise that resolves when the user is deleted
  */
-export const deleteUser = async (userId: number): Promise<void> => {
-    await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+export const deleteUser = async (userId: number, requestingUserId: number): Promise<void> => {
+    return runWithTransaction(
+        async (client) => {
+            await client.query('DELETE FROM users WHERE id = $1', [userId]);
+        },
+        { transactional: false, requestingUserId },
+    );
 };
 
 /**
  * Create or update a user.
+ *
  * @param user - User object with necessary fields.
+ * @param requestingUserId - Optional user ID (only used for updates, not for registration)
  */
-
-export const createOrUpdateUser = async (user: { email: string; password: string; admin?: boolean }) => {
+export const createOrUpdateUser = async (
+    user: { email: string; password: string; admin?: boolean },
+    requestingUserId?: number, // Optional for registration
+) => {
     const query = `
       INSERT INTO users (email, password, admin, created_at, updated_at)
       VALUES ($1, $2, $3, NOW(), NOW())
@@ -85,11 +89,21 @@ export const createOrUpdateUser = async (user: { email: string; password: string
 
     const values = [user.email, user.password, user.admin ?? false];
 
-    try {
-        const result = await pool.query(query, values);
-        return result.rows[0];
-    } catch (error) {
-        logger.error('Error creating/updating user:', error);
-        throw error;
-    }
+    return runWithTransaction(
+        async (client) => {
+            const result = await client.query(query, values);
+            const user = result.rows[0];
+            return {
+                id: user.id,
+                email: user.email,
+                password: user.password,
+                createdAt: user.created_at,
+                updatedAt: user.updated_at,
+            };
+        },
+        {
+            transactional: false,
+            requestingUserId: requestingUserId ?? undefined, // Avoid RLS if no userId is provided
+        },
+    );
 };

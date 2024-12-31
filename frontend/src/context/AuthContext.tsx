@@ -92,10 +92,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (response.ok) {
             setSelectedTeam(teamId);
-            console.log('Redirecting to dashboard');
             router.push(`/dashboard`);
         } else {
-            console.log();
             throw new Error(data.message || 'Failed to select team');
         }
     };

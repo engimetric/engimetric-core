@@ -1,46 +1,32 @@
-import { Pool } from 'pg';
 import { IntegrationSettings, Settings } from '../models/Settings';
-import dotenv from 'dotenv';
-import logger from './logger';
-
-const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
-dotenv.config({ path: envFile });
-
-const pool = new Pool({
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || '5432', 10),
-    database: process.env.DB_NAME,
-    ssl: {
-        rejectUnauthorized: false,
-    },
-});
+import { runWithTransaction } from './databaseUtils';
 
 /**
  * Create or update integration settings for a team.
  * @param teamId - ID of the team.
  * @param settings - JSON object containing integration settings.
  */
-export const createOrUpdateIntegrationSettings = async (teamId: number, settings: object) => {
-    const query = `
-        INSERT INTO settings (team_id, integrations, updated_at)
-        VALUES ($1, $2, NOW())
-        ON CONFLICT (team_id) DO UPDATE
-        SET integrations = EXCLUDED.integrations,
-            updated_at = NOW()
-        RETURNING *;
-    `;
+export const createOrUpdateIntegrationSettings = async (
+    teamId: number,
+    settings: object,
+    requestingUserId: number,
+) => {
+    return runWithTransaction(
+        async (client) => {
+            const query = `
+            INSERT INTO settings (team_id, integrations, updated_at)
+            VALUES ($1, $2, NOW())
+            ON CONFLICT (team_id) DO UPDATE
+            SET integrations = EXCLUDED.integrations,
+                updated_at = NOW()
+            RETURNING *;`;
 
-    const values = [teamId, JSON.stringify(settings)];
-
-    try {
-        const result = await pool.query(query, values);
-        return result.rows[0];
-    } catch (error) {
-        logger.error('Error creating/updating integration settings:', error);
-        throw error;
-    }
+            const values = [teamId, JSON.stringify(settings)];
+            const result = await client.query(query, values);
+            return result.rows[0];
+        },
+        { transactional: true, requestingUserId },
+    );
 };
 
 /**
@@ -66,14 +52,19 @@ export const createOrUpdateIntegrationSettings = async (teamId: number, settings
  * // ]
  * ```
  */
-export const fetchAllIntegrationSettings = async (): Promise<Settings[]> => {
-    const result = await pool.query('SELECT * FROM settings');
-    return result.rows.map((row) => ({
-        teamId: row.team_id,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-        integrations: row.integrations,
-    }));
+export const fetchAllIntegrationSettings = async (requestingUserId: number): Promise<Settings[]> => {
+    return runWithTransaction(
+        async (client) => {
+            const result = await client.query('SELECT * FROM settings');
+            return result.rows.map((row) => ({
+                teamId: row.team_id,
+                createdAt: row.created_at,
+                updatedAt: row.updated_at,
+                integrations: row.integrations,
+            }));
+        },
+        { transactional: false, requestingUserId },
+    );
 };
 
 /**
@@ -98,17 +89,25 @@ export const fetchAllIntegrationSettings = async (): Promise<Settings[]> => {
  * // }
  * ```
  */
-export const fetchIntegrationSettingsByTeamId = async (teamId: number): Promise<Settings | undefined> => {
-    const result = await pool.query('SELECT * FROM settings WHERE team_id = $1', [teamId]);
-    if (result.rows.length === 0) return undefined;
+export const fetchIntegrationSettingsByTeamId = async (
+    teamId: number,
+    requestingUserId: number,
+): Promise<Settings | undefined> => {
+    return runWithTransaction(
+        async (client) => {
+            const result = await client.query('SELECT * FROM settings WHERE team_id = $1', [teamId]);
+            if (result.rows.length === 0) return undefined;
 
-    const row = result.rows[0];
-    return {
-        teamId: row.team_id,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-        integrations: row.integrations,
-    };
+            const row = result.rows[0];
+            return {
+                teamId: row.team_id,
+                createdAt: row.created_at,
+                updatedAt: row.updated_at,
+                integrations: row.integrations,
+            };
+        },
+        { transactional: false, requestingUserId },
+    );
 };
 
 /**
@@ -130,11 +129,21 @@ export const fetchIntegrationSettingsByTeamId = async (teamId: number): Promise<
 export const fetchIntegrationSettingByName = async (
     teamId: number,
     integrationName: string,
+    requestingUserId: number,
 ): Promise<IntegrationSettings | undefined> => {
-    const result = await pool.query('SELECT integrations FROM settings WHERE team_id = $1', [teamId]);
-    if (result.rows.length === 0) return undefined;
+    return runWithTransaction(
+        async (client) => {
+            const result = await client.query('SELECT integrations FROM settings WHERE team_id = $1', [
+                teamId,
+            ]);
 
-    return result.rows[0].integrations?.[integrationName];
+            if (result.rows.length === 0) {
+                return undefined;
+            }
+            return result.rows[0].integrations?.[integrationName];
+        },
+        { transactional: false, requestingUserId },
+    );
 };
 
 /**
@@ -148,8 +157,13 @@ export const fetchIntegrationSettingByName = async (
  * ```
  * @throws Error if the settings could not be deleted
  */
-export const deleteIntegrationSettings = async (teamId: number): Promise<void> => {
-    await pool.query('DELETE FROM settings WHERE team_id = $1', [teamId]);
+export const deleteIntegrationSettings = async (teamId: number, requestingUserId: number): Promise<void> => {
+    return runWithTransaction(
+        async (client) => {
+            await client.query('DELETE FROM settings WHERE team_id = $1', [teamId]);
+        },
+        { transactional: false, requestingUserId },
+    );
 };
 
 /**
@@ -157,26 +171,43 @@ export const deleteIntegrationSettings = async (teamId: number): Promise<void> =
  *
  * @param teamId - The ID of the team
  * @param integrationName - The name of the integration to delete
+ * @param requestingUserId - The ID of the requesting user (for RLS)
  * @returns Promise that resolves when the setting is deleted
- * @example
- * ```javascript
- * await deleteIntegrationSettingByName(1, 'github');
- * ```
- * @throws Error if the setting could not be deleted
  */
 export const deleteIntegrationSettingByName = async (
     teamId: number,
     integrationName: string,
+    requestingUserId: number,
 ): Promise<void> => {
-    const result = await pool.query('SELECT integrations FROM settings WHERE team_id = $1', [teamId]);
-    if (result.rows.length === 0) return;
+    return runWithTransaction(
+        async (client) => {
+            // Fetch the current integrations
+            const result = await client.query('SELECT integrations FROM settings WHERE team_id = $1;', [
+                teamId,
+            ]);
 
-    const integrations = result.rows[0].integrations;
-    delete integrations[integrationName];
+            if (result.rows.length === 0) {
+                throw new Error(`Settings not found for teamId: ${teamId}`);
+            }
 
-    await pool.query('UPDATE settings SET integrations = $1, updated_at = $2 WHERE team_id = $3', [
-        JSON.stringify(integrations),
-        new Date(),
-        teamId,
-    ]);
+            const integrations = result.rows[0].integrations;
+
+            if (!integrations || !integrations[integrationName]) {
+                throw new Error(
+                    `Integration '${integrationName}' not found in settings for teamId: ${teamId}`,
+                );
+            }
+
+            // Remove the integration
+            delete integrations[integrationName];
+
+            // Update the integrations
+            await client.query('UPDATE settings SET integrations = $1, updated_at = $2 WHERE team_id = $3;', [
+                JSON.stringify(integrations),
+                new Date(),
+                teamId,
+            ]);
+        },
+        { transactional: true, requestingUserId },
+    );
 };

@@ -19,7 +19,7 @@ export const updateTeamSettings = async (req: Request, res: Response): Promise<v
 
         const { teamId } = user;
 
-        const team = await fetchTeamById(teamId);
+        const team = await fetchTeamById(teamId, user.id);
         if (team?.isFrozen) {
             res.status(403).json({ message: 'Team is frozen, unable to update' });
             return;
@@ -30,7 +30,7 @@ export const updateTeamSettings = async (req: Request, res: Response): Promise<v
             return;
         }
 
-        await createOrUpdateIntegrationSettings(teamId, integrationSettings);
+        await createOrUpdateIntegrationSettings(teamId, integrationSettings, user.id);
 
         res.status(200).json({
             message: `Settings for team "${teamId}" saved successfully.`,
@@ -55,7 +55,7 @@ export const getTeamSettings = async (req: Request, res: Response): Promise<void
 
         const { teamId } = user;
 
-        const teamSettings = await fetchIntegrationSettingsByTeamId(teamId);
+        const teamSettings = await fetchIntegrationSettingsByTeamId(teamId, user.id);
 
         if (!teamSettings) {
             res.status(404).json({ message: `Settings for team "${teamId}" not found.` });

@@ -37,8 +37,8 @@ const findUserByEmail = async (email: string) => {
 };
 
 // Fetch teams associated with a user
-const findTeamsByUserId = async (userId: number) => {
-    return await fetchUserTeams(userId);
+const findTeamsByUserId = async (userId: number, requestingUserId: number) => {
+    return await fetchUserTeams(userId, requestingUserId);
 };
 
 /**
@@ -70,7 +70,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        const teams = await findTeamsByUserId(user.id);
+        const teams = await findTeamsByUserId(user.id, user.id);
 
         if (!teams.length) {
             res.status(403).json({ message: 'User is not part of any team' });
@@ -93,6 +93,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             teams,
         });
     } catch (error) {
+        logger.error(`Login error: ${error}`);
         logger.error('Login error:', error);
         res.status(500).json({ message: 'Failed to login' });
     }
@@ -128,7 +129,7 @@ export const selectTeam = async (req: Request, res: Response): Promise<void> => 
 
         if (!validateInput({ teamId }, res)) return;
 
-        const teams = await fetchUserTeams(decoded.userId);
+        const teams = await fetchUserTeams(decoded.userId, decoded.userId);
         const parsedTeamId = Number(teamId);
 
         const team = teams.find((t) => t.id === parsedTeamId);
@@ -177,8 +178,8 @@ export const me = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        const user = await fetchUserById(decoded.userId);
-        const teams = await fetchUserTeams(decoded.userId);
+        const user = await fetchUserById(decoded.userId, decoded.userId);
+        const teams = await fetchUserTeams(decoded.userId, decoded.userId);
         const team = teams.find((t) => t.id === Number(decoded.teamId));
 
         if (!user || !team) {
@@ -229,7 +230,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
         if (teamNameOrSlug) {
             // If a team name/slug is provided
-            team = await findTeamByNameOrSlug(teamNameOrSlug);
+            team = await findTeamByNameOrSlug(teamNameOrSlug, user.id);
 
             if (!team) {
                 // Create a new team if it doesn't exist
@@ -240,15 +241,15 @@ export const register = async (req: Request, res: Response): Promise<void> => {
                     ownerId: user.id,
                 };
 
-                team = await createOrUpdateTeam(team);
+                team = await createOrUpdateTeam(team, user.id);
                 isNewTeam = true;
 
                 // Initialize default integration settings
-                await createOrUpdateIntegrationSettings(team.id, {});
+                await createOrUpdateIntegrationSettings(team.id, {}, user.id);
             }
 
             // Add user to the team
-            await addUserToTeam(user.id, team.id, isNewTeam ? 'admin' : 'member');
+            await addUserToTeam(user.id, team.id, isNewTeam ? 'admin' : 'member', user.id);
         }
 
         // Generate a token for initial login

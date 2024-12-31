@@ -88,7 +88,7 @@ export const syncByMonth = async (req: Request, res: Response): Promise<void> =>
             return;
         }
 
-        const team = await fetchTeamById(teamId);
+        const team = await fetchTeamById(teamId, user.id);
         if (team?.isFrozen) {
             res.status(403).json({ message: 'Team is frozen, unable to sync' });
             return;
@@ -103,6 +103,7 @@ export const syncByMonth = async (req: Request, res: Response): Promise<void> =>
             async (settings, startDate, endDate) => fetchGithubData(settings, { startDate, endDate }),
             processGithubData,
             1,
+            user.id,
         );
 
         res.status(200).json({ message: 'GitHub data successfully updated.' });
@@ -147,7 +148,7 @@ export const fullSync = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        const team = await fetchTeamById(teamId);
+        const team = await fetchTeamById(teamId, user.id);
         if (team?.isFrozen) {
             res.status(403).json({ message: 'Team is frozen, unable to full sync' });
             return;
@@ -162,6 +163,7 @@ export const fullSync = async (req: Request, res: Response): Promise<void> => {
             async (settings, startDate, endDate) => fetchGithubData(settings, { startDate, endDate }),
             processGithubData,
             12,
+            user.id,
         );
 
         res.status(200).json({ message: 'GitHub data successfully updated.' });
@@ -212,8 +214,9 @@ export const fullSync = async (req: Request, res: Response): Promise<void> => {
 export const getGithubContributions = async (req: Request, res: Response): Promise<void> => {
     try {
         const { month } = req.query;
+        const user = req.user;
 
-        if (!req.user) {
+        if (!user) {
             res.status(401).json({ message: 'Unauthorized: No user data.' });
             return;
         }
@@ -232,7 +235,7 @@ export const getGithubContributions = async (req: Request, res: Response): Promi
                 .format('YYYY-MM-DD'),
         };
 
-        const contributions = await getContributions(req.user.teamId, startDate, endDate);
+        const contributions = await getContributions(user.teamId, startDate, endDate, user.id);
 
         res.status(200).json(contributions);
     } catch (error) {

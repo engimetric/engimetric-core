@@ -6,7 +6,10 @@
         "build": "NODE_ENV=production tsc --project tsconfig.json && tsc-alias -p tsconfig.json",
         "start": "NODE_ENV=production node dist/app.js",
         "dev": "NODE_ENV=development nodemon --inspect-brk=1051 -r ts-node/register -r tsconfig-paths/register src/app.ts",
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "migrate:create": "npx ts-node migrations/001_create_schema.ts",
+        "migrate:seed": "npx ts-node migrations/002_seed_demo.ts",
+        "migrate:reset": "npx ts-node migrations/003_reset.ts"
     },
     "private": true,
     "dependencies": {

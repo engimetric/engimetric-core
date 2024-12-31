@@ -5,7 +5,7 @@ import moment from 'moment';
  * @description An array of objects containing the month, start date, and end date for the past 12 months
  * @example
  * ```javascript
- * console.log(past12Months);
+ * logger.log(past12Months);
  * // Output: [
  * //   { month: '2021-08', startDate: '2021-08-01', endDate: '2021-08-31' },
  * //   { month: '2021-07', startDate: '2021-07-01', endDate: '2021-07-31' },

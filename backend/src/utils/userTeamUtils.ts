@@ -1,27 +1,12 @@
-import { Pool } from 'pg';
-import dotenv from 'dotenv';
 import logger from './logger';
-
-const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
-dotenv.config({ path: envFile });
-
-const pool = new Pool({
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || '5432', 10),
-    database: process.env.DB_NAME,
-    ssl: {
-        rejectUnauthorized: false,
-    },
-});
+import { runWithTransaction } from './databaseUtils';
 
 /**
  * Fetch teams associated with a user.
  * @param userId - ID of the user.
  * @returns A list of teams associated with the user.
  */
-export const fetchUserTeams = async (userId: number) => {
+export const fetchUserTeams = async (userId: number, requestingUserId: number) => {
     const query = `
         SELECT t.id, t.name, t.slug, ut.role 
         FROM teams t
@@ -31,19 +16,20 @@ export const fetchUserTeams = async (userId: number) => {
 
     const values = [userId];
 
-    try {
-        const result = await pool.query(query, values);
+    logger.info(`Fetching teams for user ID: ${userId}`);
 
-        return result.rows.map((row) => ({
-            id: row.id,
-            name: row.name,
-            slug: row.slug,
-            role: row.role,
-        }));
-    } catch (error) {
-        logger.error('Error fetching user teams:', error);
-        throw error;
-    }
+    return runWithTransaction(
+        async (client) => {
+            const result = await client.query(query, values);
+            return result.rows.map((row) => ({
+                id: row.id,
+                name: row.name,
+                slug: row.slug,
+                role: row.role,
+            }));
+        },
+        { transactional: false, requestingUserId },
+    );
 };
 
 /**
@@ -52,7 +38,12 @@ export const fetchUserTeams = async (userId: number) => {
  * @param teamId - ID of the team.
  * @param role - Role of the user in the team (e.g., 'admin', 'member').
  */
-export const addUserToTeam = async (userId: number, teamId: number, role: string = 'member') => {
+export const addUserToTeam = async (
+    userId: number,
+    teamId: number,
+    role: string = 'member',
+    requestingUserId: number,
+) => {
     const query = `
         INSERT INTO user_teams (user_id, team_id, role, updated_at)
         VALUES ($1, $2, $3, NOW())
@@ -63,14 +54,13 @@ export const addUserToTeam = async (userId: number, teamId: number, role: string
     `;
 
     const values = [userId, teamId, role];
-
-    try {
-        const result = await pool.query(query, values);
-        return result.rows[0];
-    } catch (error) {
-        logger.error('Error adding user to team:', error);
-        throw error;
-    }
+    return runWithTransaction(
+        async (client) => {
+            const result = await client.query(query, values);
+            return result.rows[0];
+        },
+        { transactional: true, requestingUserId },
+    );
 };
 
 /**
@@ -78,19 +68,19 @@ export const addUserToTeam = async (userId: number, teamId: number, role: string
  * @param userId - The ID of the user
  * @param teamId - The ID of the team
  */
-export const removeUserFromTeam = async (userId: number, teamId: number) => {
-    try {
-        await pool.query(
-            `
+export const removeUserFromTeam = async (userId: number, teamId: number, requestingUserId: number) => {
+    return runWithTransaction(
+        async (client) => {
+            await client.query(
+                `
             DELETE FROM user_teams
             WHERE user_id = $1 AND team_id = $2
             `,
-            [userId, teamId],
-        );
-    } catch (error) {
-        logger.error('Error removing user from team:', error);
-        throw new Error('Failed to remove user from team');
-    }
+                [userId, teamId],
+            );
+        },
+        { transactional: true, requestingUserId },
+    );
 };
 
 /**
@@ -99,26 +89,30 @@ export const removeUserFromTeam = async (userId: number, teamId: number) => {
  * @param teamId - The ID of the team
  * @returns Boolean indicating membership status
  */
-export const isUserInTeam = async (userId: number, teamId: number): Promise<boolean> => {
-    try {
-        const result = await pool.query(
-            `
+export const isUserInTeam = async (
+    userId: number,
+    teamId: number,
+    requestingUserId: number,
+): Promise<boolean> => {
+    return runWithTransaction(
+        async (client) => {
+            const result = await client.query(
+                `
             SELECT 1 FROM user_teams
             WHERE user_id = $1 AND team_id = $2
             LIMIT 1
             `,
-            [userId, teamId],
-        );
+                [userId, teamId],
+            );
 
-        if (!result || !result.rowCount) {
-            return false;
-        }
+            if (!result || !result.rowCount) {
+                return false;
+            }
 
-        return result?.rowCount > 0;
-    } catch (error) {
-        logger.error('Error checking user-team membership:', error);
-        throw new Error('Failed to verify user-team membership');
-    }
+            return result?.rowCount > 0;
+        },
+        { transactional: false, requestingUserId },
+    );
 };
 
 /**
@@ -127,20 +121,23 @@ export const isUserInTeam = async (userId: number, teamId: number): Promise<bool
  * @param teamId - The ID of the team
  * @returns User's role in the team
  */
-export const getUserTeamRole = async (userId: number, teamId: number): Promise<string | null> => {
-    try {
-        const result = await pool.query(
-            `
+export const getUserTeamRole = async (
+    userId: number,
+    teamId: number,
+    requestingUserId: number,
+): Promise<string | null> => {
+    return runWithTransaction(
+        async (client) => {
+            const result = await client.query(
+                `
             SELECT role FROM user_teams
             WHERE user_id = $1 AND team_id = $2
             LIMIT 1
             `,
-            [userId, teamId],
-        );
-
-        return result.rows[0]?.role || null;
-    } catch (error) {
-        logger.error('Error fetching user role in team:', error);
-        throw new Error('Failed to fetch user role in team');
-    }
+                [userId, teamId],
+            );
+            return result.rows[0]?.role || null;
+        },
+        { transactional: false, requestingUserId },
+    );
 };
