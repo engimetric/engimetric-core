@@ -2,7 +2,7 @@ import { Octokit } from '@octokit/rest';
 import { TeamMember } from '../models/TeamMember';
 import { IntegrationSettings } from 'models/Settings';
 import logger from './logger';
-import { runWithTransaction } from './databaseUtils';
+import { runWithTransaction, runWithSchedulerTransaction } from './databaseUtils';
 
 /**
  * Fetch GitHub Pull Request data.
@@ -80,9 +80,10 @@ export const saveData = async (
     teamId: number,
     data: Record<number, Record<string, Record<string, number>>>,
     month: string,
-    requestingUserId: number,
+    requestingUserId?: number,
 ) => {
-    return runWithTransaction(
+    const runTransaction = requestingUserId ? runWithTransaction : runWithSchedulerTransaction;
+    return runTransaction(
         async (client) => {
             const result = await client.query(`SELECT id, metrics FROM team_members WHERE team_id = $1`, [
                 teamId,

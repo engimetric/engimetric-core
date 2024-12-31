@@ -1,5 +1,5 @@
 import { IntegrationSettings, Settings } from '../models/Settings';
-import { runWithTransaction } from './databaseUtils';
+import { runWithTransaction, runWithSchedulerTransaction } from './databaseUtils';
 
 /**
  * Create or update integration settings for a team.
@@ -91,9 +91,10 @@ export const fetchAllIntegrationSettings = async (requestingUserId: number): Pro
  */
 export const fetchIntegrationSettingsByTeamId = async (
     teamId: number,
-    requestingUserId: number,
+    requestingUserId?: number,
 ): Promise<Settings | undefined> => {
-    return runWithTransaction(
+    const runTransaction = requestingUserId ? runWithTransaction : runWithSchedulerTransaction;
+    return runTransaction(
         async (client) => {
             const result = await client.query('SELECT * FROM settings WHERE team_id = $1', [teamId]);
             if (result.rows.length === 0) return undefined;
@@ -129,9 +130,10 @@ export const fetchIntegrationSettingsByTeamId = async (
 export const fetchIntegrationSettingByName = async (
     teamId: number,
     integrationName: string,
-    requestingUserId: number,
+    requestingUserId?: number,
 ): Promise<IntegrationSettings | undefined> => {
-    return runWithTransaction(
+    const runTransaction = requestingUserId ? runWithTransaction : runWithSchedulerTransaction;
+    return runTransaction(
         async (client) => {
             const result = await client.query('SELECT integrations FROM settings WHERE team_id = $1', [
                 teamId,

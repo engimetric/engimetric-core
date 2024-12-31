@@ -62,25 +62,32 @@ export const refreshIntegrationData = async (teamId: number, integration: string
             }
 
             const teamMembers = await fetchTeamMembersWithAliases(teamId);
-            const allData: Record<number, { integration: string; merges: number; reviews: number }> = {};
+            // Adjust the allData structure
+            const allData: Record<number, Record<string, Record<string, number>>> = {};
 
-            // Process integration data
             for (const item of integrationData) {
                 const processedData = processPullRequest(item, teamMembers);
                 if (processedData) {
                     for (const [memberId, value] of Object.entries(processedData)) {
                         if (!allData[Number(memberId)]) {
-                            allData[Number(memberId)] = {
-                                integration,
+                            allData[Number(memberId)] = {};
+                        }
+
+                        if (!allData[Number(memberId)][integration]) {
+                            allData[Number(memberId)][integration] = {
                                 merges: 0,
                                 reviews: 0,
                             };
                         }
-                        allData[Number(memberId)].merges += value.merges;
-                        allData[Number(memberId)].reviews += value.reviews;
+
+                        allData[Number(memberId)][integration].merges += value.merges;
+                        allData[Number(memberId)][integration].reviews += value.reviews;
                     }
                 }
             }
+
+            // Save data for the specific month
+            await saveData(teamId, allData, month);
 
             // Save data for the specific month
             await saveData(teamId, allData, month);

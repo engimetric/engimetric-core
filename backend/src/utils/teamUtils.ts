@@ -132,8 +132,9 @@ export const fetchAllTeams = async (): Promise<Team[]> => {
  * @returns A team object if found, otherwise `undefined`.
  * @throws Error if the team could not be fetched.
  */
-export const fetchTeamById = async (teamId: number, requestingUserId: number): Promise<Team | undefined> => {
-    return runWithTransaction(
+export const fetchTeamById = async (teamId: number, requestingUserId?: number): Promise<Team | undefined> => {
+    const runTransaction = requestingUserId ? runWithTransaction : runWithSchedulerTransaction;
+    return runTransaction(
         async (client) => {
             const result = await client.query('SELECT * FROM teams WHERE id = $1', [teamId]);
 
