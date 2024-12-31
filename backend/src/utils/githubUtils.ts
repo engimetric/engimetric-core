@@ -36,7 +36,7 @@ export const fetchGithubData = async (
         logger.info(`✅ Fetched ${results.length} Pull Requests from GitHub`);
         return results;
     } catch (error) {
-        logger.error(`🚨 Error fetching GitHub data: ${(error as Error).message}`);
+        logger.error(error, `🚨 Error fetching GitHub data: ${(error as Error).message}`);
         throw error;
     }
 };

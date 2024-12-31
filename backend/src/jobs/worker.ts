@@ -100,8 +100,8 @@ export const refreshIntegrationData = async (teamId: number, integration: string
         logger.info(`✅ All data refreshed successfully for Team ID: ${teamId}, Integration: ${integration}`);
     } catch (error) {
         logger.error(
-            `❌ Failed to refresh integration data for Team ID: ${teamId}, Integration: ${integration}`,
             error,
+            `❌ Failed to refresh integration data for Team ID: ${teamId}, Integration: ${integration}`,
         );
     }
 };

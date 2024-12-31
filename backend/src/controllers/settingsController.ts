@@ -36,7 +36,7 @@ export const updateTeamSettings = async (req: Request, res: Response): Promise<v
             message: `Settings for team "${teamId}" saved successfully.`,
         });
     } catch (error) {
-        logger.error('Error updating team settings:', error);
+        logger.error(error, 'Error updating team settings');
         res.status(500).json({ message: 'Failed to save team settings.' });
     }
 };
@@ -64,7 +64,7 @@ export const getTeamSettings = async (req: Request, res: Response): Promise<void
 
         res.status(200).json(teamSettings);
     } catch (error) {
-        logger.error('Error fetching team settings:', error);
+        logger.error(error, 'Error fetching team settings');
         res.status(500).json({ message: 'Failed to retrieve team settings.' });
     }
 };

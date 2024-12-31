@@ -86,7 +86,7 @@ const scheduleTeamSync = (teamId: number, slot: number) => {
                 clearInterval(heartbeatInterval);
                 await markSyncComplete(teamId, integration);
             } catch (error) {
-                logger.error(`❌ Sync failed for '${integration}' on Team ID: ${teamId}`, error);
+                logger.error(error, `❌ Sync failed for '${integration}' on Team ID: ${teamId}`);
                 await markSyncFailed(teamId, integration);
             }
         }

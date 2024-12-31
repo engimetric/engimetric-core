@@ -17,7 +17,7 @@ export const getAllTeams = async (req: Request, res: Response): Promise<void> =>
         const teams = await fetchAllTeams();
         res.status(200).json(teams);
     } catch (error) {
-        logger.error('Error fetching all teams:', error);
+        logger.error(error, 'Error fetching all teams');
         res.status(500).json({ message: 'Failed to fetch teams' });
     }
 };
@@ -49,7 +49,7 @@ export const getTeamById = async (req: Request, res: Response): Promise<void> =>
 
         res.status(200).json(team);
     } catch (error) {
-        logger.error('Error fetching team by ID:', error);
+        logger.error(error, 'Error fetching team by ID');
         res.status(500).json({ message: 'Failed to fetch team' });
     }
 };
@@ -75,7 +75,7 @@ export const getTeamsByUserId = async (req: Request, res: Response): Promise<voi
 
         res.status(200).json(teams);
     } catch (error) {
-        logger.error('Error fetching team by ID:', error);
+        logger.error(error, 'Error fetching team by ID');
         res.status(500).json({ message: 'Failed to fetch team' });
     }
 };
@@ -118,7 +118,7 @@ export const saveTeam = async (req: Request, res: Response): Promise<void> => {
         res.status(200).json({ message: 'Team saved successfully', team });
         return;
     } catch (error) {
-        logger.error('Error saving team:', error);
+        logger.error(error, 'Error saving team');
         res.status(500).json({ message: 'Failed to save team' });
         return;
     }
@@ -139,7 +139,7 @@ export const deleteTeamById = async (req: Request, res: Response): Promise<void>
         await deleteTeam(teamId, userId);
         res.status(200).json({ message: 'Team deleted successfully' });
     } catch (error) {
-        logger.error('Error deleting team:', error);
+        logger.error(error, 'Error deleting team:');
         res.status(500).json({ message: 'Failed to delete team' });
     }
 };

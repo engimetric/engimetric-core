@@ -108,7 +108,7 @@ export const syncByMonth = async (req: Request, res: Response): Promise<void> =>
 
         res.status(200).json({ message: 'GitHub data successfully updated.' });
     } catch (error) {
-        logger.error('❌ Error updating GitHub data:', error);
+        logger.error(error, 'Error updating GitHub data');
         res.status(500).json({
             message: 'Failed to update contributions.',
             error: (error as Error).message,
@@ -168,7 +168,7 @@ export const fullSync = async (req: Request, res: Response): Promise<void> => {
 
         res.status(200).json({ message: 'GitHub data successfully updated.' });
     } catch (error: Error | any) {
-        logger.error('❌ Error updating GitHub data:', error);
+        logger.error(error, 'Error updating GitHub data');
         res.status(500).json({
             message: error?.message || 'Failed to full sync.',
             error: (error as Error).message,
@@ -239,7 +239,7 @@ export const getGithubContributions = async (req: Request, res: Response): Promi
 
         res.status(200).json(contributions);
     } catch (error) {
-        logger.error('❌ Error retrieving contributions:', error);
+        logger.error(error, 'Error retrieving contributions');
         res.status(500).json({
             message: 'Failed to retrieve contributions.',
             error: (error as Error).message,

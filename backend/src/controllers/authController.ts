@@ -93,8 +93,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             teams,
         });
     } catch (error) {
-        logger.error(`Login error: ${error}`);
-        logger.error('Login error:', error);
         res.status(500).json({ message: 'Failed to login' });
     }
 };
@@ -120,7 +118,7 @@ export const selectTeam = async (req: Request, res: Response): Promise<void> => 
                 return;
             }
         } catch (err) {
-            logger.error('JWT verification failed:', err);
+            logger.error(err, 'JWT verification failed:');
             res.status(401).json({ message: 'Invalid or expired token' });
             return;
         }
@@ -153,7 +151,7 @@ export const selectTeam = async (req: Request, res: Response): Promise<void> => 
             teamId,
         });
     } catch (error) {
-        logger.error('Team selection error:', error);
+        logger.error(error, 'Team selection error');
         res.status(500).json({ message: 'Failed to select team' });
     }
 };
@@ -192,7 +190,7 @@ export const me = async (req: Request, res: Response): Promise<void> => {
             team,
         });
     } catch (error) {
-        logger.error('Error fetching user:', error);
+        logger.error(error, 'Error fetching user');
         res.status(500).json({ message: 'Failed to fetch user' });
     }
 };
@@ -269,7 +267,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             nextStep: team ? 'dashboard' : 'select_team',
         });
     } catch (error) {
-        logger.error('Registration error:', error);
+        logger.error(error, 'Registration error');
         res.status(500).json({ message: 'Failed to register user' });
     }
 };

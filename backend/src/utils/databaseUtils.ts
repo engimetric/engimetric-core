@@ -66,7 +66,7 @@ export const runWithTransaction = async <T>(
             await client.query('ROLLBACK');
         }
         const duration = Date.now() - startTime;
-        logger.error(`❌ Query failed after ${duration}ms:`, error);
+        logger.error(error, `❌ Query failed after ${duration}ms`);
         throw error;
     } finally {
         client.release();
@@ -122,7 +122,7 @@ export const runWithSchedulerTransaction = async <T>(
             await client.query('ROLLBACK'); // Rollback on error
         }
         const duration = Date.now() - startTime;
-        logger.error(`❌ Scheduler query failed after ${duration}ms:`, error);
+        logger.error(error, `❌ Scheduler query failed after ${duration}ms`);
         throw error;
     } finally {
         client.release(); // Release the connection back to the pool
