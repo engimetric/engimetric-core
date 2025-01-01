@@ -1,11 +1,18 @@
 import { Request, Response } from 'express';
-import { IntegrationSettings } from '../models/Settings';
-import { createOrUpdateIntegrationSettings, fetchIntegrationSettingsByTeamId } from '../utils/settingsUtils';
+import { IntegrationSettings, llmMetadata, integrationMetadata } from '../models/Settings';
+import {
+    createOrUpdateIntegrationSettings,
+    fetchIntegrationSettingsByTeamId,
+    createOrUpdateLLMSettings,
+} from '../utils/settingsUtils';
 import logger from '../utils/logger';
 import { fetchTeamById } from 'utils/teamUtils';
+import { validateLLMSettings } from 'utils/validators';
 
 /**
  * Update or create integration settings for a team.
+ * @param req.body - Integration settings object
+ * @param req.user - user object
  */
 export const updateTeamSettings = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -43,6 +50,7 @@ export const updateTeamSettings = async (req: Request, res: Response): Promise<v
 
 /**
  * Fetch integration settings for a team.
+ * @param req.user - user object
  */
 export const getTeamSettings = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -67,4 +75,51 @@ export const getTeamSettings = async (req: Request, res: Response): Promise<void
         logger.error(error, 'Error fetching team settings');
         res.status(500).json({ message: 'Failed to retrieve team settings.' });
     }
+};
+
+/**
+ * Update LLM settings for a team.
+ * @param req.body.llmSettings - LLM settings object
+ * @param req.user - user object
+ */
+export const updateLLMSettings = async (req: Request, res: Response): Promise<void> => {
+    const user = req?.user;
+    const { llmSettings } = req?.body;
+
+    if (!user?.teamId || !user.id) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+    }
+
+    if (!validateLLMSettings(llmSettings)) {
+        res.status(400).json({ message: 'Invalid LLM settings.' });
+        return;
+    }
+
+    try {
+        await createOrUpdateLLMSettings(llmSettings, user.teamId, user.id);
+
+        res.status(200).json({
+            message: `LLM settings for team "${user.teamId}" saved successfully.`,
+        });
+    } catch (error) {
+        logger.error(error, 'Error updating LLM settings');
+        res.status(500).json({ message: 'Failed to update LLM settings.' });
+    }
+};
+
+/**
+ * Fetch integration metadata.
+ */
+export const getMetadata = async (req: Request, res: Response): Promise<void> => {
+    res.status(200).json(integrationMetadata);
+    return;
+};
+
+/**
+ * Fetch LLM metadata.
+ */
+export const getLLMMetadata = async (req: Request, res: Response): Promise<void> => {
+    res.status(200).json(llmMetadata);
+    return;
 };

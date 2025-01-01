@@ -1,10 +1,12 @@
-import { IntegrationSettings, Settings } from '../models/Settings';
+import { IntegrationSettings, LLMSettings, Settings } from '../models/Settings';
 import { runWithTransaction, runWithSchedulerTransaction } from './databaseUtils';
 
 /**
  * Create or update integration settings for a team.
+ *
  * @param teamId - ID of the team.
  * @param settings - JSON object containing integration settings.
+ * @param requestingUserId - ID of the requesting user.
  */
 export const createOrUpdateIntegrationSettings = async (
     teamId: number,
@@ -32,6 +34,7 @@ export const createOrUpdateIntegrationSettings = async (
 /**
  * Fetch all integration settings.
  *
+ * @param requestingUserId - The ID of the requesting user (for RLS)
  * @returns An array of all integration settings
  * @example
  * ```javascript
@@ -60,6 +63,7 @@ export const fetchAllIntegrationSettings = async (requestingUserId: number): Pro
                 teamId: row.team_id,
                 createdAt: row.created_at,
                 updatedAt: row.updated_at,
+                llm: row.llm,
                 integrations: row.integrations,
             }));
         },
@@ -71,6 +75,7 @@ export const fetchAllIntegrationSettings = async (requestingUserId: number): Pro
  * Fetch integration settings for a specific team.
  *
  * @param teamId - The ID of the team
+ * @param requestingUserId - The ID of the requesting user (for RLS)
  * @returns The settings object or undefined if not found
  * @example
  * ```javascript
@@ -104,6 +109,7 @@ export const fetchIntegrationSettingsByTeamId = async (
                 teamId: row.team_id,
                 createdAt: row.created_at,
                 updatedAt: row.updated_at,
+                llm: row.llm,
                 integrations: row.integrations,
             };
         },
@@ -116,6 +122,7 @@ export const fetchIntegrationSettingsByTeamId = async (
  *
  * @param teamId - The ID of the team
  * @param integrationName - The name of the integration
+ * @param requestingUserId - The ID of the requesting user (for RLS)
  * @returns IntegrationSettings object or undefined if not found
  * @example
  * ```javascript
@@ -152,6 +159,7 @@ export const fetchIntegrationSettingByName = async (
  * Delete all integration settings for a team.
  *
  * @param teamId - The ID of the team
+ * @param requestingUserId - The ID of the requesting user (for RLS)
  * @returns Promise that resolves when the settings are deleted
  * @example
  * ```javascript
@@ -211,5 +219,28 @@ export const deleteIntegrationSettingByName = async (
             ]);
         },
         { transactional: true, requestingUserId },
+    );
+};
+
+/**
+ * Create or update LLM settings for a specific team.
+ * @param llmSettings - The LLM settings object
+ * @param teamId - The ID of the team
+ * @param requestingUserId - The ID of the requesting user (for RLS)
+ * @returns Promise that resolves when the settings are created or updated
+ */
+export const createOrUpdateLLMSettings = async (
+    llmSettings: LLMSettings,
+    teamId: number,
+    requestingUserId: number,
+) => {
+    return runWithTransaction(
+        async (client) => {
+            await client.query(`UPDATE settings SET llm = $1, updated_at = NOW() WHERE team_id = $2`, [
+                JSON.stringify(llmSettings),
+                teamId,
+            ]);
+        },
+        { transactional: false, requestingUserId },
     );
 };
