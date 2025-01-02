@@ -1,4 +1,8 @@
 import { randomBytes, createCipheriv, createDecipheriv } from 'crypto';
+import dotenv from 'dotenv';
+
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
+dotenv.config({ path: envFile });
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default_encryption_key_32_bytes'; // Must be 32 characters
 const IV_LENGTH = 16; // AES block size
