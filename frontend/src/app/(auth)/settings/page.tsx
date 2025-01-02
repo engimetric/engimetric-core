@@ -308,13 +308,15 @@ const SettingsPage = () => {
                         fields: any;
                     }) => (
                         <div key={integrationName} className="mb-6 bg-gray-800 p-4 rounded">
-                            <h2 className="text-2xl pb-5">{label} Settings</h2>
-                            <button
-                                onClick={() => handleSync(integrationName)}
-                                className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md text-sm"
-                            >
-                                Sync
-                            </button>
+                            <div className="flex items-center justify-between bg-gray-800 p-4 rounded-md">
+                                <h2 className="text-2xl pb-5">{label} Settings</h2>
+                                <button
+                                    onClick={() => handleSync(integrationName)}
+                                    className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md text-sm"
+                                >
+                                    Sync
+                                </button>
+                            </div>
                             {fields.map(({ key, label, type }: { key: any; label: string; type: string }) => (
                                 <div key={key} className="mb-4">
                                     <label className="text-md font-medium py-2 pr-5">{label}</label>
