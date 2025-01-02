@@ -6,6 +6,7 @@ import {
     updateLLMSettings,
     getLLMMetadata,
     getMetadata,
+    updateIntegrationSettings,
 } from '../controllers/settingsController';
 
 const router = express.Router();
@@ -115,5 +116,31 @@ router.post('/llm', authenticate, updateLLMSettings);
  * @returns The LLM metadata object
  */
 router.get('/llm-metadata', authenticate, getLLMMetadata);
+
+/**
+ * @route POST /settings/integration/:integrationName
+ * @description Update integration settings for a team
+ * @access Protected
+ * @throws {500} - If an error occurs
+ * @example
+ * POST /settings/integration/github
+ * {
+ *   "settings": {
+ *     "enabled": true
+ *   }
+ * }
+ * Response:
+ * {
+ *   "message": "Settings for integration \"github\" updated successfully.",
+ *   "integrationName": "github",
+ *   "settings": {
+ *     "enabled": true
+ *   }
+ * }
+ * @param req - The request object
+ * @param res - The response object
+ * @returns The updated integration settings object
+ */
+router.post('integration/:integrationName', authenticate, updateIntegrationSettings);
 
 export default router;

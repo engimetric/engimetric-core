@@ -134,7 +134,7 @@ async function seedDatabase() {
         // ========================================
         await client.query(`
             INSERT INTO sync_states (team_id, integration, is_syncing, last_started_at, last_heartbeat_at, last_synced_at, last_failed_at) VALUES
-            (1, 'GitHub', FALSE, NOW() - INTERVAL '1 day', NOW() - INTERVAL '30 minutes', NOW() - INTERVAL '1 hour', NULL),
+            (1, 'github', FALSE, NOW() - INTERVAL '1 day', NOW() - INTERVAL '30 minutes', NOW() - INTERVAL '1 hour', NULL),
             (2, 'Jira', TRUE, NOW() - INTERVAL '2 hours', NOW() - INTERVAL '15 minutes', NULL, NOW() - INTERVAL '10 minutes');
         `);
         console.log('✅ Demo sync states inserted.');
@@ -144,8 +144,8 @@ async function seedDatabase() {
         // ========================================
         await client.query(`
             INSERT INTO settings (team_id, integrations, created_at, updated_at) VALUES
-            (1, '{"GitHub": {"enabled": false}, "Jira": {"enabled": true}}', NOW(), NOW()),
-            (2, '{"GitHub": {"enabled": false}, "Jira": {"enabled": true}}', NOW(), NOW());
+            (1, '{"github": {"enabled": true, "token": "abc123", "org": "engimetric" }, "jira": {"enabled": true, "url": "https://engimetric.atlassian.net", "projectKey": "ISSUE" }}', NOW(), NOW()),
+            (2, '{"github": {"enabled": true, "token": "abc123", "org": "engimetric" }, "jira": {"enabled": true, "url": "https://engimetric.atlassian.net", "projectKey": "QA" }}', NOW(), NOW());
         `);
         console.log('✅ Demo settings inserted.');
 
