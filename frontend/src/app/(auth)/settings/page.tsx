@@ -22,7 +22,6 @@ interface Settings {
     integrations: Record<string, IntegrationSettings>;
     llm: LLMSettings;
     teamId: number | null;
-    isFrozen: boolean;
 }
 
 const SettingsPage = () => {
@@ -32,7 +31,6 @@ const SettingsPage = () => {
         integrations: {},
         llm: { enabled: true, provider: 'openai', model: '', apiKey: '' },
         teamId: null,
-        isFrozen: false,
     });
 
     const [loading, setLoading] = useState(true);
@@ -76,7 +74,6 @@ const SettingsPage = () => {
                 integrations: data?.integrations || {},
                 llm: data?.llm || { enabled: false, provider: 'openai', model: '', apiKey: '' },
                 teamId: data?.teamId || null,
-                isFrozen: data?.isFrozen || false,
             });
 
             setTeamId(data?.teamId || null);
