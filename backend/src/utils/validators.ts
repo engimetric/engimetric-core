@@ -52,3 +52,23 @@ export const validateIntegrationSettings = (
     }
     return true;
 };
+
+/**
+ * Validate encrypted fields in integration settings.
+ *
+ * @param integrationName - Integration name
+ * @param settings - Integration settings object
+ * @returns True if settings are valid, false otherwise
+ */
+export const validateEncryptedFields = (integrationName: string, settings: Record<string, any>) => {
+    const metadata = integrationMetadata.find((meta) => meta.integrationName === integrationName);
+    if (!metadata) return false;
+
+    for (const field of metadata.fields) {
+        if (field.encrypted && typeof settings[field.key] !== 'string') {
+            throw new Error(`Field "${field.key}" must be a string for encryption.`);
+        }
+    }
+
+    return true;
+};

@@ -317,61 +317,76 @@ const SettingsPage = () => {
                                     Sync
                                 </button>
                             </div>
-                            {fields.map(({ key, label, type }: { key: any; label: string; type: string }) => (
-                                <div key={key} className="mb-4">
-                                    <label className="text-md font-medium py-2 pr-5">{label}</label>
-                                    {type === 'boolean' ? (
-                                        <input
-                                            type="checkbox"
-                                            checked={!!settings.integrations[integrationName]?.[key]}
-                                            onChange={(e) =>
-                                                handleInputChange(integrationName, key, e.target.checked)
-                                            }
-                                            className="w-5 h-5 accent-purple-500"
-                                        />
-                                    ) : type === 'number' ? (
-                                        <input
-                                            type="number"
-                                            value={Number(settings.integrations[integrationName]?.[key]) || 0}
-                                            onChange={(e) =>
-                                                handleInputChange(integrationName, key, e.target.value)
-                                            }
-                                            className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white"
-                                        />
-                                    ) : type === 'date' ? (
-                                        <input
-                                            type="date"
-                                            value={
-                                                settings.integrations[integrationName]?.[key]
-                                                    ? new Date(
-                                                          settings.integrations[integrationName]?.[
-                                                              key
-                                                          ] as Date,
-                                                      )
-                                                          .toISOString()
-                                                          .split('T')[0]
-                                                    : ''
-                                            }
-                                            onChange={(e) =>
-                                                handleInputChange(integrationName, key, e.target.value)
-                                            }
-                                            className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white"
-                                        />
-                                    ) : (
-                                        <input
-                                            type="text"
-                                            value={
-                                                settings.integrations[integrationName]?.[key]?.toString() ||
-                                                ''
-                                            }
-                                            onChange={(e) =>
-                                                handleInputChange(integrationName, key, e.target.value)
-                                            }
-                                            className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white"
-                                        />
-                                    )}
-                                </div>
-                            ))}
+                            {fields.map(
+                                ({
+                                    key,
+                                    label,
+                                    type,
+                                    encrypted,
+                                }: {
+                                    key: any;
+                                    label: string;
+                                    type: string;
+                                    encrypted: boolean | undefined;
+                                }) => (
+                                    <div key={key} className="mb-4">
+                                        <label className="text-md font-medium py-2 pr-5">{label}</label>
+                                        {type === 'boolean' ? (
+                                            <input
+                                                type="checkbox"
+                                                checked={!!settings.integrations[integrationName]?.[key]}
+                                                onChange={(e) =>
+                                                    handleInputChange(integrationName, key, e.target.checked)
+                                                }
+                                                className="w-5 h-5 accent-purple-500"
+                                            />
+                                        ) : type === 'number' ? (
+                                            <input
+                                                type="number"
+                                                value={
+                                                    Number(settings.integrations[integrationName]?.[key]) || 0
+                                                }
+                                                onChange={(e) =>
+                                                    handleInputChange(integrationName, key, e.target.value)
+                                                }
+                                                className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white"
+                                            />
+                                        ) : type === 'date' ? (
+                                            <input
+                                                type="date"
+                                                value={
+                                                    settings.integrations[integrationName]?.[key]
+                                                        ? new Date(
+                                                              settings.integrations[integrationName]?.[
+                                                                  key
+                                                              ] as Date,
+                                                          )
+                                                              .toISOString()
+                                                              .split('T')[0]
+                                                        : ''
+                                                }
+                                                onChange={(e) =>
+                                                    handleInputChange(integrationName, key, e.target.value)
+                                                }
+                                                className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white"
+                                            />
+                                        ) : (
+                                            <input
+                                                type={encrypted ? 'password' : 'text'}
+                                                value={
+                                                    settings.integrations[integrationName]?.[
+                                                        key
+                                                    ]?.toString() || ''
+                                                }
+                                                onChange={(e) =>
+                                                    handleInputChange(integrationName, key, e.target.value)
+                                                }
+                                                className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white"
+                                            />
+                                        )}
+                                    </div>
+                                ),
+                            )}
                         </div>
                     ),
                 )}
@@ -381,7 +396,7 @@ const SettingsPage = () => {
             <div className="mb-6 bg-gray-800 p-4 rounded">
                 <h2 className="text-2xl pb-5">LLM Settings</h2>
                 <fieldset disabled={isFrozen}>
-                    {llmMetadata.map(({ key, label, type, options = [] }) => (
+                    {llmMetadata.map(({ key, label, type, options = [], encrypted }) => (
                         <div key={key} className="mb-4">
                             <label className="text-md font-medium py-2 pr-5 block">{label}</label>
                             {type === 'boolean' ? (
@@ -405,7 +420,7 @@ const SettingsPage = () => {
                                 </select>
                             ) : (
                                 <input
-                                    type="text"
+                                    type={encrypted ? 'password' : 'text'}
                                     value={settings.llm[key as keyof LLMSettings]?.toString() || ''}
                                     onChange={(e) => handleLLMInputChange(key, e.target.value)}
                                     className="w-full px-4 py-2 rounded-lg bg-gray-700 text-white"

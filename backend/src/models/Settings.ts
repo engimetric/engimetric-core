@@ -23,6 +23,7 @@ export interface LLMField {
     required: boolean;
     defaultValue?: string | boolean | number;
     options?: { value: string; label: string }[]; // For select dropdowns
+    encrypted?: boolean; // Indicates if the value should be encrypted
 }
 
 /**
@@ -59,7 +60,7 @@ export const llmMetadata: LLMField[] = [
         defaultValue: 'openai',
     },
     { key: 'model', type: 'string', label: 'Model Name', required: true },
-    { key: 'apiKey', type: 'string', label: 'API Key', required: true },
+    { key: 'apiKey', type: 'string', label: 'API Key', required: true, encrypted: true },
 ];
 
 /**
@@ -107,6 +108,7 @@ export interface IntegrationField {
     label: string; // For UI display
     required: boolean;
     defaultValue?: string | boolean | number | Date;
+    encrypted?: boolean; // Indicates if the value should be encrypted
 }
 
 /**
@@ -152,7 +154,7 @@ export const integrationMetadata: IntegrationMetadata[] = [
                 required: true,
                 defaultValue: true,
             },
-            { key: 'token', type: 'string', label: 'Access Token', required: true },
+            { key: 'token', type: 'string', label: 'Access Token', required: true, encrypted: true },
             { key: 'org', type: 'string', label: 'Organization Name', required: false },
         ],
     },
@@ -168,7 +170,8 @@ export const integrationMetadata: IntegrationMetadata[] = [
                 defaultValue: true,
             },
             { key: 'url', type: 'string', label: 'Jira URL', required: true },
-            { key: 'projectKey', type: 'string', label: 'Project Key', required: false },
+            { key: 'projectKey', type: 'string', label: 'Project Key', required: true },
+            { key: 'token', type: 'string', label: 'Access Token', required: true, encrypted: true },
         ],
     },
 ];

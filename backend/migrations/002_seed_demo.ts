@@ -144,8 +144,8 @@ async function seedDatabase() {
         // ========================================
         await client.query(`
             INSERT INTO settings (team_id, integrations, created_at, updated_at) VALUES
-            (1, '{"github": {"enabled": true, "token": "abc123", "org": "engimetric" }, "jira": {"enabled": true, "url": "https://engimetric.atlassian.net", "projectKey": "ISSUE" }}', NOW(), NOW()),
-            (2, '{"github": {"enabled": true, "token": "abc123", "org": "engimetric" }, "jira": {"enabled": true, "url": "https://engimetric.atlassian.net", "projectKey": "QA" }}', NOW(), NOW());
+            (1, '{"github": {"enabled": true, "token": "0a5a2da4cd021ce92df039b34d43d021:1cb7ad138da5943761c92eefb5edc7d4", "org": "engimetric" }, "jira": {"enabled": true, "url": "https://engimetric.atlassian.net", "projectKey": "ISSUE" }}', NOW(), NOW()),
+            (2, '{"github": {"enabled": true, "token": "0a5a2da4cd021ce92df039b34d43d021:1cb7ad138da5943761c92eefb5edc7d4", "org": "engimetric" }, "jira": {"enabled": true, "url": "https://engimetric.atlassian.net", "projectKey": "QA" }}', NOW(), NOW());
         `);
         console.log('✅ Demo settings inserted.');
 
