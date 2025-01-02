@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" width="24" height="24"><svg classname="mr-1 size-8 stroke-current stroke-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" strokelinecap="round" strokelinejoin="round" stroke="#000000">
+      <path d="M0 0h24v24H0z" stroke="none"></path>
+      <rect x="3" y="12" width="6" height="8" rx="1"></rect>
+      <rect x="9" y="8" width="6" height="12" rx="1"></rect>
+      <rect x="15" y="4" width="6" height="16" rx="1"></rect>
+      <path d="M4 20h14"></path>
+    </svg><style>@media (prefers-color-scheme: light) { :root { filter: none; } }
+@media (prefers-color-scheme: dark) { :root { filter: invert(100%); } }
+</style></svg>

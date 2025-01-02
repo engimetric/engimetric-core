@@ -11,17 +11,28 @@ export const metadata: Metadata = {
         {
             rel: 'icon',
             type: 'image/png',
-            sizes: '32x32',
-            url: '/favicon-32x32.png',
+            sizes: '96x96',
+            url: '/favicon-96x96.png',
         },
         {
             rel: 'icon',
             type: 'image/png',
-            sizes: '16x16',
-            url: '/favicon-16x16.png',
+            sizes: '192x192',
+            url: '/favicon-192x192.png',
         },
         {
             rel: 'icon',
+            type: 'image/png',
+            sizes: '512x512',
+            url: '/favicon-512x512.png',
+        },
+        {
+            rel: 'icon',
+            type: 'image/svg+xml',
+            url: '/favicon.svg',
+        },
+        {
+            rel: 'shortcut icon',
             url: '/favicon.ico',
         },
     ],
